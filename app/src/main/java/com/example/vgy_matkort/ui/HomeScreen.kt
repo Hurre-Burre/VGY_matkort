@@ -17,7 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -111,7 +111,7 @@ fun HomeScreen(
                 title = { },
                 actions = {
                     IconButton(onClick = { showSetBalanceDialog = true }) {
-                        Icon(Icons.Filled.AttachMoney, contentDescription = "Ange saldo")
+                        Icon(Icons.Filled.Edit, contentDescription = "Ange saldo")
                     }
                     IconButton(onClick = { showTutorialDialog = true }) {
                         Icon(Icons.Filled.Info, contentDescription = "Hjälp")
