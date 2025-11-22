@@ -39,6 +39,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isDarkTheme = MutableStateFlow(sharedPreferences.getBoolean("is_dark_theme", false))
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
     
+    private val _shouldShowTutorial = MutableStateFlow(!sharedPreferences.getBoolean("has_seen_tutorial", false))
+    val shouldShowTutorial: StateFlow<Boolean> = _shouldShowTutorial.asStateFlow()
+
+    private val _tutorialStep = MutableStateFlow(0)
+    val tutorialStep: StateFlow<Int> = _tutorialStep.asStateFlow()
+
+    private val _highlightRegistry = MutableStateFlow<Map<String, androidx.compose.ui.geometry.Rect>>(emptyMap())
+    val highlightRegistry: StateFlow<Map<String, androidx.compose.ui.geometry.Rect>> = _highlightRegistry.asStateFlow()
+
+    
     init {
         viewModelScope.launch {
             val existingHolidays = holidayDao.getAll().first()
@@ -91,6 +101,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isDarkTheme.value = isDark
         sharedPreferences.edit().putBoolean("is_dark_theme", isDark).apply()
     }
+    
+    fun markTutorialAsSeen() {
+        _shouldShowTutorial.value = false
+        sharedPreferences.edit().putBoolean("has_seen_tutorial", true).apply()
+    }
+    
+    fun showTutorial() {
+        _tutorialStep.value = 0
+        _shouldShowTutorial.value = true
+    }
+
+    fun nextTutorialStep() {
+        _tutorialStep.value++
+    }
+
+    fun prevTutorialStep() {
+        if (_tutorialStep.value > 0) {
+            _tutorialStep.value--
+        }
+    }
+    
+    fun setTutorialStep(step: Int) {
+        _tutorialStep.value = step
+    }
+
+    fun registerHighlight(key: String, rect: androidx.compose.ui.geometry.Rect) {
+        val current = _highlightRegistry.value.toMutableMap()
+        current[key] = rect
+        _highlightRegistry.value = current
+    }
+
     
     val uiState = combine(transactions, _currentDate, holidays) { transactions, date, dbHolidays ->
         // Convert DB holidays to ranges first

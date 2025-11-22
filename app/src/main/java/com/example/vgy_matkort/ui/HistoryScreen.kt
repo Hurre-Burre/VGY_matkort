@@ -20,37 +20,38 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.IsoFields
-import java.util.Date
+import androidx.compose.ui.geometry.Rect
 import java.util.Locale
+import java.util.Date
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HistoryScreen(
     transactions: List<Transaction>,
-    onDeleteTransaction: (Transaction) -> Unit
+    onDeleteTransaction: (Transaction) -> Unit,
+    onRegisterHighlight: (String, Rect) -> Unit
 ) {
-    val groupedTransactions = remember(transactions) {
-        transactions.groupBy { transaction ->
-            val date = Instant.ofEpochMilli(transaction.timestamp)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coordinates ->
+                onRegisterHighlight("history_list", coordinates.boundsInRoot())
+            },
+        contentPadding = PaddingValues(bottom = 80.dp)
+    ) {
+        val groupedTransactions = transactions.groupBy { transaction ->
+            val date = Instant.ofEpochMilli(transaction.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
             val weekFields = IsoFields.WEEK_OF_WEEK_BASED_YEAR
             val week = date.get(weekFields)
-            // Simple key: "Week $week"
-            "Week $week"
+            "Vecka $week"
         }
-    }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 80.dp) // Space for bottom nav
-    ) {
         groupedTransactions.forEach { (week, weekTransactions) ->
-            stickyHeader {
+            item {
                 WeekHeader(week = week, total = weekTransactions.sumOf { it.amount })
             }
-            
-            items(weekTransactions.sortedByDescending { it.timestamp }) { transaction ->
+            items(weekTransactions) { transaction ->
                 TransactionItem(transaction = transaction, onDelete = { onDeleteTransaction(transaction) })
             }
         }

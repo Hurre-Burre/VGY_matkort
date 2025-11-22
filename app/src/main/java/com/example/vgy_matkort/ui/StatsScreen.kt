@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -25,17 +26,15 @@ import androidx.compose.ui.graphics.toArgb
 import com.example.vgy_matkort.data.Transaction
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
 
 @Composable
 fun StatsScreen(
     uiState: UiState,
-    transactions: List<Transaction>
+    transactions: List<Transaction>,
+    onRegisterHighlight: (String, Rect) -> Unit
 ) {
-    // Use chart data from UiState
-    val chartData = uiState.chartData
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -59,12 +58,15 @@ fun StatsScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp),
+                .height(300.dp)
+                .onGloballyPositioned { coordinates ->
+                    onRegisterHighlight("stats_chart", coordinates.boundsInRoot())
+                },
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Box(modifier = Modifier.padding(16.dp)) {
                 BalanceChart(
-                    data = chartData,
+                    data = uiState.chartData,
                     initialBalance = uiState.initialBalance,
                     totalDays = 100 // This could be improved to be dynamic
                 )
@@ -93,38 +95,44 @@ fun StatsScreen(
         Spacer(modifier = Modifier.height(32.dp))
         
         // Weekly Breakdown
-        Text(
-            text = "Veckovis uppdelning",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        uiState.weeklySummaries.forEach { summary ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Row(
+        Column(
+            modifier = Modifier.onGloballyPositioned { coordinates ->
+                onRegisterHighlight("stats_weekly", coordinates.boundsInRoot())
+            }
+        ) {
+            Text(
+                text = "Veckovis uppdelning",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            uiState.weeklySummaries.forEach { summary ->
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    Text(
-                        text = "Vecka ${summary.weekNumber}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "${summary.balance} kr",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (summary.balance >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Vecka ${summary.weekNumber}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "${summary.balance} kr",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = if (summary.balance >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }

@@ -32,8 +32,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import com.example.vgy_matkort.data.Preset
 import com.example.vgy_matkort.data.Transaction
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,12 +53,28 @@ fun HomeScreen(
     onDeletePreset: (Preset) -> Unit,
     onNavigateToWeeklySummary: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onSetManualBalance: (Int) -> Unit
+
+    shouldShowTutorial: Boolean,
+    currentTutorialStep: Int,
+    onTutorialComplete: () -> Unit,
+    onShowTutorial: () -> Unit,
+    onRegisterHighlight: (String, Rect) -> Unit
 ) {
-    var showAddPresetDialog by remember { mutableStateOf(false) }
     var presetToDelete by remember { mutableStateOf<Preset?>(null) }
-    var showSetBalanceDialog by remember { mutableStateOf(false) }
-    var showTutorialDialog by remember { mutableStateOf(false) }
+    var showAddPresetDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    
+    val tankViewPagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 4 })
+
+    // Sync TankView pager with tutorial step
+    LaunchedEffect(currentTutorialStep) {
+        if (shouldShowTutorial) {
+            val stepData = TutorialStepData.steps.getOrNull(currentTutorialStep)
+            stepData?.tankViewPage?.let { page ->
+                tankViewPagerState.animateScrollToPage(page)
+            }
+        }
+    }
 
     if (showAddPresetDialog) {
         AddPresetDialog(
@@ -63,7 +85,7 @@ fun HomeScreen(
             }
         )
     }
-    
+
     if (presetToDelete != null) {
         AlertDialog(
             onDismissRequest = { presetToDelete = null },
@@ -88,42 +110,48 @@ fun HomeScreen(
         )
     }
     
-    if (showSetBalanceDialog) {
-        SetBalanceDialog(
-            currentBalance = uiState.currentBalance,
-            onDismiss = { showSetBalanceDialog = false },
-            onConfirm = { newBalance ->
-                onSetManualBalance(newBalance)
-                showSetBalanceDialog = false
-            }
-        )
-    }
-    
-    if (showTutorialDialog) {
-        TutorialDialog(
-            onDismiss = { showTutorialDialog = false }
-        )
-    }
+
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { },
+                title = { Text("VGY Matkort") },
                 actions = {
-                    IconButton(onClick = { showSetBalanceDialog = true }) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Ange saldo")
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onShowTutorial()
+                        },
+                        modifier = Modifier.onGloballyPositioned { 
+                            onRegisterHighlight("settings_theme", it.boundsInRoot()) // Reusing theme highlight key for help/tutorial for now or add new one
+                        }
+                    ) {
+                        Icon(Icons.Default.Info, contentDescription = "Hjälp / Tutorial")
                     }
-                    IconButton(onClick = { showTutorialDialog = true }) {
-                        Icon(Icons.Filled.Info, contentDescription = "Hjälp")
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onNavigateToSettings()
+                        },
+                        modifier = Modifier.onGloballyPositioned { 
+                            onRegisterHighlight("settings_data", it.boundsInRoot()) // Reusing data highlight key for settings
+                        }
+                    ) {
                         Icon(Icons.Default.Settings, contentDescription = "Inställningar")
                     }
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddPresetDialog = true }) {
+            FloatingActionButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    showAddPresetDialog = true
+                },
+                modifier = Modifier.onGloballyPositioned { 
+                    onRegisterHighlight("fab", it.boundsInRoot())
+                }
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Preset")
             }
         }
@@ -137,48 +165,113 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Tank / Gauge View
-            TankView(
-                dailyAvailable = uiState.dailyAvailable,
-                currentBalance = uiState.currentBalance,
-                daysRemaining = uiState.daysRemaining,
-                periodEnd = uiState.periodEnd,
-                currentWeekBalance = uiState.currentWeekBalance,
-                currentWeekAccumulated = uiState.currentWeekAccumulated,
-                periodBudgetRemaining = uiState.periodBudgetRemaining,
-                totalPeriodBudget = uiState.totalPeriodBudget
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+            Box(modifier = Modifier.onGloballyPositioned { 
+                onRegisterHighlight("tank_view", it.boundsInRoot())
+            }) {
+                TankView(
+                    dailyAvailable = uiState.dailyAvailable,
+                    currentBalance = uiState.currentBalance,
+                    daysRemaining = uiState.daysRemaining,
+                    periodEnd = uiState.periodEnd,
+                    currentWeekBalance = uiState.currentWeekBalance,
+                    currentWeekAccumulated = uiState.currentWeekAccumulated,
+                    periodBudgetRemaining = uiState.periodBudgetRemaining,
+                    totalPeriodBudget = uiState.totalPeriodBudget,
+                    pagerState = tankViewPagerState
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
             // Quick Add Buttons
+            Text(
+                text = "Snabbval",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned {
+                        onRegisterHighlight("quick_add_buttons", it.boundsInRoot())
+                    },
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                QuickAddButton(amount = 50, onClick = { onAddTransaction(50) }, modifier = Modifier.weight(1f))
-                QuickAddButton(amount = 70, onClick = { onAddTransaction(70) }, modifier = Modifier.weight(1f))
-                QuickAddButton(amount = 90, onClick = { onAddTransaction(90) }, modifier = Modifier.weight(1f))
+                QuickAddButton(
+                    amount = 15, 
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAddTransaction(15)
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+                QuickAddButton(
+                    amount = 20, 
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAddTransaction(20)
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+                QuickAddButton(
+                    amount = 25, 
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAddTransaction(25)
+                    },
+                    modifier = Modifier.weight(1f)
+                )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
             // Presets
-            if (presets.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Förinställningar",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                IconButton(onClick = { showAddPresetDialog = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Lägg till")
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            if (presets.isEmpty()) {
+                Text(
+                    text = "Inga förinställningar än. Tryck på + för att lägga till.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned {
+                            onRegisterHighlight("presets_list", it.boundsInRoot())
+                        },
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(presets) { preset ->
                         PresetChip(
                             preset = preset,
-                            onClick = { onAddTransaction(preset.amount) },
-                            onLongClick = { presetToDelete = preset }
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onAddTransaction(preset.amount)
+                            },
+                            onLongClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                presetToDelete = preset
+                            }
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -194,9 +287,14 @@ fun TankView(
     currentWeekBalance: Int,
     currentWeekAccumulated: Int,
     periodBudgetRemaining: Int,
-    totalPeriodBudget: Int
+    totalPeriodBudget: Int,
+    pagerState: androidx.compose.foundation.pager.PagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 4 })
 ) {
-    val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 4 })
+    val haptic = LocalHapticFeedback.current
+    
+    LaunchedEffect(pagerState.currentPage) {
+        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    }
     
     Card(
         modifier = Modifier.fillMaxWidth(),
