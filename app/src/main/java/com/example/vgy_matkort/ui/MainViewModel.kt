@@ -414,6 +414,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    fun setPeriodBudgetRemaining(targetBalance: Int) {
+        viewModelScope.launch {
+            val currentRemaining = uiState.value.periodBudgetRemaining
+            val correction = currentRemaining - targetBalance
+            // If remaining is 1000 and target is 800, correction = 200 (we spent 200 more)
+            // If remaining is 1000 and target is 1200, correction = -200 (we spent 200 less)
+            if (correction != 0) {
+                transactionDao.insert(Transaction(amount = correction, timestamp = System.currentTimeMillis()))
+            }
+        }
+    }
     
     suspend fun importHolidaysFromWeb(): Result<Int> {
         return try {

@@ -27,6 +27,15 @@ fun SetBalanceDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+                
+                Text(
+                    text = "Vill du ta reda på ditt nuvarande saldo?\nRing 08 681 81 37",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
                 Text(
                     text = "Ange det saldo du faktiskt har just nu. Appen kommer lägga till en korrigeringstransaktion för att justera saldot.",
                     style = MaterialTheme.typography.bodySmall,

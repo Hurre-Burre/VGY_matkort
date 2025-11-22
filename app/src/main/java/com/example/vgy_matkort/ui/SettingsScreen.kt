@@ -32,77 +32,26 @@ fun SettingsScreen(
     isDarkTheme: Boolean,
     onToggleTheme: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
-    currentBalance: Int = 0,
-    onSetManualBalance: (Int) -> Unit,
+    periodBudgetRemaining: Int = 0,
+    onSetPeriodBudget: (Int) -> Unit,
     onRegisterHighlight: (String, Rect) -> Unit,
     onNavigateToHolidays: () -> Unit = {},
     isHapticEnabled: Boolean,
     onToggleHaptic: (Boolean) -> Unit
 ) {
+
     var showSetBalanceDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
     
-    // Function to handle reset (wrapper to match signature if needed, or just use direct logic)
-    val onResetBalance = { onSetManualBalance(0) } // Simplified reset logic reusing setManualBalance or we need to pass onResetBalance from ViewModel if it does something special. 
-    // Looking at MainViewModel, resetBalance() exists. But AppNavigation passes onSetManualBalance.
-    // Let's check AppNavigation again. It passes onSetManualBalance. It does NOT pass onResetBalance.
-    // However, the original code in SettingsScreen (line 40) calls `onResetBalance()`.
-    // This implies `onResetBalance` was either passed in or defined locally.
-    // Given AppNavigation only passes `onSetManualBalance`, I will define `onResetBalance` locally using `onSetManualBalance(0)`.
-    
-    val onNavigateToHolidays = { /* TODO: Implement navigation if needed or it might be handled by a lambda passed in? */ 
-        // AppNavigation passes nothing for holidays navigation?
-        // Wait, AppNavigation:
-        // composable("settings") { SettingsScreen(...) }
-        // It does NOT pass onNavigateToHolidays.
-        // But line 101 in SettingsScreen calls `onNavigateToHolidays`.
-        // And line 153 in AppNavigation handles auto-nav for tutorial?
-        // Let's look at AppNavigation again.
-        // It seems I might have missed some arguments in my reconstruction plan or the file was edited before.
-        // Actually, in the broken file, line 101 uses `onNavigateToHolidays`.
-        // I should probably add it to the arguments or define it.
-        // But wait, `ManageHolidaysScreen` is in the same file? No, it's a separate function in the same file (line 138).
-        // Ah, `SettingsScreen` likely navigates to it.
-        // But `ManageHolidaysScreen` is a Composable.
-        // If `SettingsScreen` navigates to it, it needs a NavController or a callback.
-        // The broken code has `onNavigateToHolidays` usage.
-        // I will add it to the arguments to be safe, or check if I can infer where it goes.
-        // For now, I'll add it to arguments and update AppNavigation later if needed, OR just define it as empty/todo if I can't change AppNavigation easily (but I can).
-        // Actually, looking at `AppNavigation.kt`, `SettingsScreen` is called with:
-        /*
-        SettingsScreen(
-            isDarkTheme = isDarkTheme,
-            onToggleTheme = onToggleTheme,
-            onNavigateBack = { navController.popBackStack() },
-            currentBalance = uiState.currentBalance,
-            onSetManualBalance = viewModel::setManualBalance,
-            onRegisterHighlight = viewModel::registerHighlight
-        )
-        */
-        // It is NOT passed `onNavigateToHolidays`.
-        // This means `SettingsScreen` signature in `AppNavigation` call site does not match what `SettingsScreen` body expects (line 101).
-        // I must fix `SettingsScreen` to match the call site OR update the call site.
-        // Since I am fixing compilation errors, I should probably make `SettingsScreen` match the call site first.
-        // But then `onNavigateToHolidays` (line 101) will be unresolved.
-        // I will define `val onNavigateToHolidays = { }` locally for now to fix compilation, or better, add it to the signature and update AppNavigation.
-        // Updating AppNavigation is better practice.
-        // But wait, `ManageHolidaysScreen` is right below. Maybe it's a dialog?
-        // No, it looks like a full screen (Scaffold).
-        // I'll add `onNavigateToHolidays: () -> Unit` to the signature and update AppNavigation in a subsequent step if needed, or just provide a dummy for now.
-        // Actually, I'll check if I can just use a local state to show it?
-        // The file has `ManageHolidaysScreen` defined.
-        // Maybe `SettingsScreen` shows it?
-        // No, usually it's navigation.
-        // I will add `onNavigateToHolidays: () -> Unit = {}` as a default argument to avoid breaking AppNavigation immediately, but I should probably fix AppNavigation too.
-    }
+    val onResetBalance = { onSetPeriodBudget(0) }
 
     if (showSetBalanceDialog) {
         SetBalanceDialog(
-            currentBalance = currentBalance,
+            currentBalance = periodBudgetRemaining,
             onDismiss = { showSetBalanceDialog = false },
             onConfirm = { newBalance ->
-                onSetManualBalance(newBalance)
+                onSetPeriodBudget(newBalance)
                 showSetBalanceDialog = false
             }
         )
