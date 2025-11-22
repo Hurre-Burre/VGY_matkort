@@ -35,7 +35,9 @@ fun SettingsScreen(
     currentBalance: Int = 0,
     onSetManualBalance: (Int) -> Unit,
     onRegisterHighlight: (String, Rect) -> Unit,
-    onNavigateToHolidays: () -> Unit = {}
+    onNavigateToHolidays: () -> Unit = {},
+    isHapticEnabled: Boolean,
+    onToggleHaptic: (Boolean) -> Unit
 ) {
     var showSetBalanceDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
@@ -166,8 +168,26 @@ fun SettingsScreen(
                 Switch(
                     checked = isDarkTheme,
                     onCheckedChange = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onToggleTheme(it)
+                    }
+                )
+            }
+            
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+            
+            // Haptic Feedback Section
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Haptisk feedback")
+                Switch(
+                    checked = isHapticEnabled,
+                    onCheckedChange = {
+                        if (it) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onToggleHaptic(it)
                     }
                 )
             }
@@ -182,7 +202,7 @@ fun SettingsScreen(
             )
             OutlinedButton(
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onNavigateToHolidays()
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -200,7 +220,7 @@ fun SettingsScreen(
             )
             Button(
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     showSetBalanceDialog = true
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -213,7 +233,7 @@ fun SettingsScreen(
             
             Button(
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     showResetDialog = true
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -232,7 +252,8 @@ fun ManageHolidaysScreen(
     onAddHoliday: (Long, Long, String) -> Unit,
     onDeleteHoliday: (Holiday) -> Unit,
     onImportHolidays: suspend () -> Result<Int>,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    isHapticEnabled: Boolean
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var holidayToDelete by remember { mutableStateOf<Holiday?>(null) }
@@ -357,7 +378,11 @@ fun ManageHolidaysScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 items(holidays) { holiday ->
-                    HolidayItem(holiday = holiday, onDelete = { holidayToDelete = holiday })
+                    HolidayItem(
+                        holiday = holiday, 
+                        onDelete = { holidayToDelete = holiday },
+                        isHapticEnabled = isHapticEnabled
+                    )
                 }
             }
         }
@@ -365,7 +390,7 @@ fun ManageHolidaysScreen(
 }
 
 @Composable
-fun HolidayItem(holiday: Holiday, onDelete: () -> Unit) {
+fun HolidayItem(holiday: Holiday, onDelete: () -> Unit, isHapticEnabled: Boolean) {
     val haptic = LocalHapticFeedback.current
     val dateFormat = DateTimeFormatter.ofPattern("MMM dd")
     val start = Instant.ofEpochMilli(holiday.startDate).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -388,7 +413,7 @@ fun HolidayItem(holiday: Holiday, onDelete: () -> Unit) {
                 Text(text = dateRange, style = MaterialTheme.typography.bodySmall)
             }
             IconButton(onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onDelete()
             }) {
                 Icon(Icons.Default.Delete, contentDescription = "Ta bort")

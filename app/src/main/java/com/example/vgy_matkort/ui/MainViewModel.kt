@@ -48,6 +48,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _highlightRegistry = MutableStateFlow<Map<String, androidx.compose.ui.geometry.Rect>>(emptyMap())
     val highlightRegistry: StateFlow<Map<String, androidx.compose.ui.geometry.Rect>> = _highlightRegistry.asStateFlow()
 
+    private val _isHapticEnabled = MutableStateFlow(sharedPreferences.getBoolean("is_haptic_enabled", true))
+    val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
+
     
     init {
         viewModelScope.launch {
@@ -100,6 +103,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleTheme(isDark: Boolean) {
         _isDarkTheme.value = isDark
         sharedPreferences.edit().putBoolean("is_dark_theme", isDark).apply()
+    }
+
+    fun toggleHaptic(isEnabled: Boolean) {
+        _isHapticEnabled.value = isEnabled
+        sharedPreferences.edit().putBoolean("is_haptic_enabled", isEnabled).apply()
     }
     
     fun markTutorialAsSeen() {

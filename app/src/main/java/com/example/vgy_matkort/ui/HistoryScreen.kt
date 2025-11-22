@@ -25,12 +25,15 @@ import java.util.Locale
 import java.util.Date
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
 @Composable
 fun HistoryScreen(
     transactions: List<Transaction>,
     onDeleteTransaction: (Transaction) -> Unit,
-    onRegisterHighlight: (String, Rect) -> Unit
+    onRegisterHighlight: (String, Rect) -> Unit,
+    isHapticEnabled: Boolean
 ) {
     LazyColumn(
         modifier = Modifier
@@ -52,7 +55,11 @@ fun HistoryScreen(
                 WeekHeader(week = week, total = weekTransactions.sumOf { it.amount })
             }
             items(weekTransactions) { transaction ->
-                TransactionItem(transaction = transaction, onDelete = { onDeleteTransaction(transaction) })
+                TransactionItem(
+                    transaction = transaction, 
+                    onDelete = { onDeleteTransaction(transaction) },
+                    isHapticEnabled = isHapticEnabled
+                )
             }
         }
         
@@ -93,8 +100,10 @@ fun WeekHeader(week: String, total: Int) {
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction, onDelete: () -> Unit) {
-    val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+fun TransactionItem(transaction: Transaction, onDelete: () -> Unit, isHapticEnabled: Boolean) {
+    val haptic = LocalHapticFeedback.current
+    // Updated format to include Day Name (e.g. "Mån, 22 Nov, 14:30")
+    val dateFormat = SimpleDateFormat("EEE, d MMM, HH:mm", Locale("sv", "SE"))
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -113,7 +122,10 @@ fun TransactionItem(transaction: Transaction, onDelete: () -> Unit) {
                 Text(text = amountText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(text = dateFormat.format(Date(transaction.timestamp)), style = MaterialTheme.typography.bodySmall)
             }
-            IconButton(onClick = onDelete) {
+            IconButton(onClick = {
+                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onDelete()
+            }) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete")
             }
         }

@@ -1,10 +1,13 @@
 package com.example.vgy_matkort.ui
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -32,6 +35,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Home : Screen("home", "Hem", Icons.Default.Home)
     object History : Screen("history", "Historik", Icons.Default.List)
     object Stats : Screen("stats", "Statistik", Icons.Default.DateRange)
+    object Settings : Screen("settings", "Inställningar", Icons.Default.Settings)
 }
 
 @Composable
@@ -46,12 +50,14 @@ fun AppNavigation(
     val presets by viewModel.presets.collectAsState()
     val holidays by viewModel.holidays.collectAsState()
     val shouldShowTutorial by viewModel.shouldShowTutorial.collectAsState()
+    val isHapticEnabled by viewModel.isHapticEnabled.collectAsState()
 
 
     val items = listOf(
         Screen.Home,
         Screen.History,
-        Screen.Stats
+        Screen.Stats,
+        Screen.Settings
     )
 
     // Global Tutorial Overlay
@@ -65,7 +71,13 @@ fun AppNavigation(
         if (area != null) {
             val rect = highlightRegistry[area.key]
             if (rect != null) {
-                listOf(HighlightSpec(rect, 16.dp)) // Default corner radius
+                // Inflate the rect by 8.dp for better visual breathing room
+                val inflation = 16f // approx 8.dp in pixels, but we need density. 
+                // Let's use a fixed inflation or get density. 
+                // Since we are in a Composable, we can use LocalDensity.
+                // But wait, we are inside remember block.
+                // I'll just inflate it by a safe amount or use LocalDensity outside.
+                listOf(HighlightSpec(rect.inflate(16f), 16.dp)) 
             } else {
                 emptyList()
             }
@@ -93,6 +105,13 @@ fun AppNavigation(
                                     launchSingleTop = true
                                     restoreState = true
                                 }
+                            },
+                            modifier = if (screen == Screen.Settings) {
+                                Modifier.onGloballyPositioned { 
+                                    viewModel.registerHighlight("settings_nav_item", it.boundsInRoot())
+                                }
+                            } else {
+                                Modifier
                             }
                         )
                     }
@@ -119,14 +138,16 @@ fun AppNavigation(
                         currentTutorialStep = tutorialStep,
                         onTutorialComplete = viewModel::markTutorialAsSeen,
                         onShowTutorial = viewModel::showTutorial,
-                        onRegisterHighlight = viewModel::registerHighlight
+                        onRegisterHighlight = viewModel::registerHighlight,
+                        isHapticEnabled = isHapticEnabled
                     )
                 }
                 composable(Screen.History.route) {
                     HistoryScreen(
                         transactions = transactions,
                         onDeleteTransaction = viewModel::deleteTransaction,
-                        onRegisterHighlight = viewModel::registerHighlight
+                        onRegisterHighlight = viewModel::registerHighlight,
+                        isHapticEnabled = isHapticEnabled
                     )
                 }
                 composable(Screen.Stats.route) {
@@ -136,7 +157,7 @@ fun AppNavigation(
                         onRegisterHighlight = viewModel::registerHighlight
                     )
                 }
-                composable("settings") {
+                composable(Screen.Settings.route) {
                     SettingsScreen(
                         isDarkTheme = isDarkTheme,
                         onToggleTheme = onToggleTheme,
@@ -144,7 +165,9 @@ fun AppNavigation(
                         currentBalance = uiState.currentBalance,
                         onSetManualBalance = viewModel::setManualBalance,
                         onRegisterHighlight = viewModel::registerHighlight,
-                        onNavigateToHolidays = { navController.navigate("manage_holidays") }
+                        onNavigateToHolidays = { navController.navigate("manage_holidays") },
+                        isHapticEnabled = isHapticEnabled,
+                        onToggleHaptic = viewModel::toggleHaptic
                     )
                 }
                 composable("manage_holidays") {
@@ -153,7 +176,8 @@ fun AppNavigation(
                         onAddHoliday = viewModel::addHoliday,
                         onDeleteHoliday = viewModel::deleteHoliday,
                         onImportHolidays = viewModel::importHolidaysFromWeb,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        isHapticEnabled = isHapticEnabled
                     )
                 }
             }
