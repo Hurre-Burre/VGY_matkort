@@ -14,73 +14,25 @@ fun SetBalanceDialog(
     onDismiss: () -> Unit,
     onConfirm: (Int) -> Unit
 ) {
-    var balanceInput by remember { mutableStateOf(currentBalance.toString()) }
-    var isError by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Ange nuvarande saldo") },
-        text = {
-            Column {
+    com.example.vgy_matkort.ui.components.KeypadDialog(
+        onDismiss = onDismiss,
+        onConfirm = onConfirm,
+        title = "Ange nuvarande saldo",
+        initialValue = "", // Start empty to force user to enter new value, or could be currentBalance.toString()
+        subtitle = {
+            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                 Text(
                     text = "Nuvarande saldo: $currentBalance kr",
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    color = com.example.vgy_matkort.ui.theme.TextSecondary
                 )
-                
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Vill du ta reda på ditt nuvarande saldo?\nRing 08 681 81 37",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                Text(
-                    text = "Ange det saldo du faktiskt har just nu. Appen kommer lägga till en korrigeringstransaktion för att justera saldot.",
+                    text = "Vill du ta reda på ditt saldo? Ring 08 681 81 37",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    color = com.example.vgy_matkort.ui.theme.PrimaryBlue,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
-                OutlinedTextField(
-                    value = balanceInput,
-                    onValueChange = { 
-                        balanceInput = it
-                        isError = false
-                    },
-                    label = { Text("Nytt saldo (kr)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = isError,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (isError) {
-                    Text(
-                        text = "Ange ett giltigt belopp",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val newBalance = balanceInput.toIntOrNull()
-                    if (newBalance != null) {
-                        onConfirm(newBalance)
-                    } else {
-                        isError = true
-                    }
-                }
-            ) {
-                Text("Bekräfta")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Avbryt")
             }
         }
     )

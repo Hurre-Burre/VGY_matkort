@@ -9,10 +9,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,27 +18,31 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import com.example.vgy_matkort.data.Preset
 import com.example.vgy_matkort.data.Transaction
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import com.example.vgy_matkort.ui.theme.BackgroundGradientEnd
+import com.example.vgy_matkort.ui.theme.BackgroundGradientStart
+import com.example.vgy_matkort.ui.theme.SurfaceDark
+import com.example.vgy_matkort.ui.theme.TextSecondary
+import com.example.vgy_matkort.ui.theme.TextWhite
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +81,7 @@ fun HomeScreen(
     }
 
     if (showAddPresetDialog) {
-        AddPresetDialog(
+        com.example.vgy_matkort.ui.components.AddPresetDialog(
             onDismiss = { showAddPresetDialog = false },
             onConfirm = { amount, label ->
                 onAddPreset(amount, label)
@@ -111,124 +113,134 @@ fun HomeScreen(
             }
         )
     }
-    
 
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("VGY Matkort") },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onShowTutorial()
-                        },
-                        modifier = Modifier.onGloballyPositioned { 
-                            onRegisterHighlight("settings_theme", it.boundsInRoot()) // Reusing theme highlight key for help/tutorial for now or add new one
-                        }
-                    ) {
-                        Icon(Icons.Default.Info, contentDescription = "Hjälp / Tutorial")
-                    }
-                }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(BackgroundGradientStart, BackgroundGradientEnd)
+                )
             )
-        },
-        floatingActionButton = {}
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 0.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Tank / Gauge View
-            Box(modifier = Modifier.onGloballyPositioned { 
-                onRegisterHighlight("tank_view", it.boundsInRoot())
-            }) {
-                TankView(
-                    dailyAvailable = uiState.dailyAvailable,
-                    currentBalance = uiState.currentBalance,
-                    daysRemaining = uiState.daysRemaining,
-                    periodEnd = uiState.periodEnd,
-                    currentWeekBalance = uiState.currentWeekBalance,
-                    currentWeekAccumulated = uiState.currentWeekAccumulated,
-                    periodBudgetRemaining = uiState.periodBudgetRemaining,
-                    totalPeriodBudget = uiState.totalPeriodBudget,
-                    pagerState = tankViewPagerState
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = { }, // Empty title for cleaner look
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onShowTutorial()
+                            },
+                            modifier = Modifier.onGloballyPositioned { 
+                                onRegisterHighlight("settings_theme", it.boundsInRoot())
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Info, 
+                                contentDescription = "Hjälp / Tutorial",
+                                tint = TextWhite
+                            )
+                        }
+                    }
                 )
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Quick Add Buttons
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(
+            },
+            floatingActionButton = {}
+        ) { innerPadding ->
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned {
-                        onRegisterHighlight("quick_add_buttons", it.boundsInRoot())
-                    },
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 0.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                QuickAddButton(
-                    amount = 50, 
-                    onClick = {
-                        if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onAddTransaction(50)
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                QuickAddButton(
-                    amount = 70, 
-                    onClick = {
-                        if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onAddTransaction(70)
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                QuickAddButton(
-                    amount = 90, 
-                    onClick = {
-                        if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onAddTransaction(90)
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Presets
-            
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned {
-                        onRegisterHighlight("presets_list", it.boundsInRoot())
-                    },
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(presets) { preset ->
-                    PresetChip(
-                        preset = preset,
+                // Balance Section (Replaces TankView)
+                Box(modifier = Modifier.onGloballyPositioned { 
+                    onRegisterHighlight("tank_view", it.boundsInRoot())
+                }) {
+                    BalanceSection(
+                        uiState = uiState,
+                        pagerState = tankViewPagerState
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(48.dp))
+                
+                // Quick Actions
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .onGloballyPositioned {
+                            onRegisterHighlight("quick_add_buttons", it.boundsInRoot())
+                        },
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    QuickActionButton(
+                        value = 50,
                         onClick = {
                             if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onAddTransaction(preset.amount)
-                        },
-                        onLongClick = {
+                            onAddTransaction(50)
+                        }
+                    )
+                    QuickActionButton(
+                        value = 70,
+                        onClick = {
                             if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            presetToDelete = preset
+                            onAddTransaction(70)
+                        }
+                    )
+                    QuickActionButton(
+                        value = 90,
+                        onClick = {
+                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onAddTransaction(90)
                         }
                     )
                 }
-                item {
-                    AddPresetChip(onClick = {
-                        if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        showAddPresetDialog = true
-                    })
+                
+                Spacer(modifier = Modifier.height(48.dp))
+                
+                // Presets Header
+                Text(
+                    text = "Presets",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextSecondary,
+                    modifier = Modifier.align(Alignment.Start).padding(bottom = 16.dp)
+                )
+
+                // Presets List
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned {
+                            onRegisterHighlight("presets_list", it.boundsInRoot())
+                        },
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(presets) { preset ->
+                        PresetChip(
+                            preset = preset,
+                            onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onAddTransaction(preset.amount)
+                            },
+                            onLongClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                presetToDelete = preset
+                            }
+                        )
+                    }
+                    item {
+                        AddPresetChip(onClick = {
+                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            showAddPresetDialog = true
+                        })
+                    }
                 }
             }
         }
@@ -237,245 +249,124 @@ fun HomeScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TankView(
-    dailyAvailable: Int, 
-    currentBalance: Int, 
-    daysRemaining: Int, 
-    periodEnd: java.time.LocalDate?,
-    currentWeekBalance: Int,
-    currentWeekAccumulated: Int,
-    periodBudgetRemaining: Int,
-    totalPeriodBudget: Int,
-    pagerState: androidx.compose.foundation.pager.PagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 4 })
+fun BalanceSection(
+    uiState: UiState,
+    pagerState: androidx.compose.foundation.pager.PagerState
 ) {
-    val haptic = LocalHapticFeedback.current
-    
-    LaunchedEffect(pagerState.currentPage) {
-        // Assuming we can't easily access isHapticEnabled here without passing it down, 
-        // but TankView is a child of HomeScreen.
-        // For now, I'll leave it or pass it down if I can. 
-        // Actually, I should pass it down to TankView too if I want to control this.
-        // But the user request specifically mentioned "menyknapparna" and "ta bort transaktion".
-        // It didn't explicitly say "swiping". But "haptic feedback for menu buttons... and when removing".
-        // And "Add a setting to activate/deactivate haptic feedback".
-        // So I should probably respect it everywhere.
-        // I will modify TankView signature in a separate call or just skip it for now as it wasn't explicitly requested to be toggled, but implied.
-        // Wait, "Lägg till en inställning för att aktivera/avaktiver haptic feedback." implies ALL haptic feedback.
-        // So I should pass it to TankView.
-    }
-    
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            androidx.compose.foundation.pager.HorizontalPager(state = pagerState) { page ->
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when (page) {
-                        0 -> { // Available Now
-                            GaugeView(
-                                value = currentBalance,
-                                max = 500,
-                                min = -200,
-                                label = "Total"
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("Tillgängligt nu", style = MaterialTheme.typography.labelLarge)
-                                    Text(
-                                        text = "$currentBalance kr",
-                                        style = MaterialTheme.typography.displayLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = when {
-                                            currentBalance >= 200 -> Color(0xFF4CAF50)
-                                            currentBalance >= 100 -> Color(0xFF8BC34A)
-                                            currentBalance >= 0 -> Color(0xFFFFC107)
-                                            else -> Color(0xFFF44336)
-                                        }
-                                    )
-                                    Text(
-                                        text = "Nuvarande saldo",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                        1 -> { // Smart Daily
-                            GaugeView(
-                                value = dailyAvailable,
-                                max = 140,
-                                min = 0,
-                                label = "Daily"
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("Daglig budget", style = MaterialTheme.typography.labelLarge)
-                                    Text(
-                                        text = "$dailyAvailable kr",
-                                        style = MaterialTheme.typography.displayLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = when {
-                                            dailyAvailable >= 90 -> Color(0xFF4CAF50)
-                                            dailyAvailable >= 70 -> Color(0xFF8BC34A)
-                                            dailyAvailable >= 50 -> Color(0xFFFFC107)
-                                            else -> Color(0xFFF44336)
-                                        }
-                                    )
-                                    Text(
-                                        text = "$daysRemaining skoldagar kvar",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                        2 -> { // This Week
-                            GaugeView(
-                                value = currentWeekBalance,
-                                max = 200,
-                                min = -200,
-                                label = "Week"
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("Denna vecka", style = MaterialTheme.typography.labelLarge)
-                                    Text(
-                                        text = "$currentWeekBalance kr",
-                                        style = MaterialTheme.typography.displayLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = when {
-                                            currentWeekBalance >= 50 -> Color(0xFF4CAF50)
-                                            currentWeekBalance >= 0 -> Color(0xFF8BC34A)
-                                            currentWeekBalance >= -50 -> Color(0xFFFFC107)
-                                            else -> Color(0xFFF44336)
-                                        }
-                                    )
-                                    Text(
-                                        text = "Ackumulerat: $currentWeekAccumulated kr",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                        3 -> { // Period Budget
-                            GaugeView(
-                                value = periodBudgetRemaining,
-                                max = totalPeriodBudget,
-                                min = 0,
-                                label = "Period"
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("Periodens budget", style = MaterialTheme.typography.labelLarge)
-                                    Text(
-                                        text = "$periodBudgetRemaining kr",
-                                        style = MaterialTheme.typography.displayLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = when {
-                                            periodBudgetRemaining >= (totalPeriodBudget * 0.6) -> Color(0xFF4CAF50)
-                                            periodBudgetRemaining >= (totalPeriodBudget * 0.4) -> Color(0xFF8BC34A)
-                                            periodBudgetRemaining >= (totalPeriodBudget * 0.2) -> Color(0xFFFFC107)
-                                            else -> Color(0xFFF44336)
-                                        }
-                                    )
-                                    Text(
-                                        text = "Kvar till lovet",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+        androidx.compose.foundation.pager.HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 32.dp),
+            pageSpacing = 16.dp
+        ) { page ->
+            when (page) {
+                0 -> BalanceCard(
+                    title = "Tillgängligt nu",
+                    amount = uiState.currentBalance,
+                    subtitle = "Nuvarande saldo",
+                    highlight = true
+                )
+                1 -> BalanceCard(
+                    title = "Daglig budget",
+                    amount = uiState.dailyAvailable,
+                    subtitle = "${uiState.daysRemaining} skoldagar kvar"
+                )
+                2 -> BalanceCard(
+                    title = "Denna vecka",
+                    amount = uiState.currentWeekBalance,
+                    subtitle = "Ackumulerat: ${uiState.currentWeekAccumulated} kr"
+                )
+                3 -> BalanceCard(
+                    title = "Periodens budget",
+                    amount = uiState.periodBudgetRemaining,
+                    subtitle = "Kvar till lovet"
+                )
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Pager Indicator
-            Row(
-                Modifier
-                    .wrapContentHeight()
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                repeat(pagerState.pageCount) { iteration ->
-                    val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                    Box(
-                        modifier = Modifier
-                            .padding(2.dp)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(color)
-                            .size(8.dp)
-                    )
-                }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Pager Indicator
+        Row(
+            Modifier
+                .wrapContentHeight()
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            repeat(pagerState.pageCount) { iteration ->
+                val color = if (pagerState.currentPage == iteration) TextWhite else TextWhite.copy(alpha = 0.3f)
+                Box(
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .size(8.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-fun GaugeView(
-    value: Int, 
-    max: Int, 
-    min: Int, 
-    label: String,
-    content: @Composable () -> Unit
+fun BalanceCard(
+    title: String,
+    amount: Int,
+    subtitle: String,
+    highlight: Boolean = false
 ) {
-    Box(
-        contentAlignment = Alignment.BottomCenter,
-        modifier = Modifier.size(350.dp, 250.dp) // Increased height for more vertical space
+    // Transparent - showing gradient background
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(240.dp)
+            .padding(vertical = 32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            // Draw Arc Background
-            drawArc(
-                color = Color.Gray.copy(alpha = 0.2f),
-                startAngle = 180f,
-                sweepAngle = 180f,
-                useCenter = false,
-                style = Stroke(width = 40f, cap = StrokeCap.Round),
-                size = Size(size.width, size.width), // Full width circle (350x350)
-                topLeft = Offset(0f, 0f)
-            )
-            
-            // Calculate progress
-            val range = max - min
-            val normalizedValue = (value - min).coerceIn(0, range)
-            val progress = (normalizedValue / range.toFloat()) * 180f
-            
-            val gaugeColor = when {
-                value >= (max * 0.6) -> Color(0xFF4CAF50)
-                value >= (max * 0.4) -> Color(0xFF8BC34A)
-                value >= (max * 0.2) -> Color(0xFFFFC107)
-                else -> Color(0xFFF44336)
-            }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = TextSecondary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "$amount kr",
+            style = MaterialTheme.typography.displayLarge.copy(
+                fontSize = 72.sp
+            ),
+            fontWeight = FontWeight.Bold,
+            color = TextWhite
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.titleMedium,
+            color = TextSecondary
+        )
+    }
+}
 
-            drawArc(
-                color = gaugeColor,
-                startAngle = 180f,
-                sweepAngle = progress,
-                useCenter = false,
-                style = Stroke(width = 40f, cap = StrokeCap.Round),
-                size = Size(size.width, size.width),
-                topLeft = Offset(0f, 0f)
+@Composable
+fun QuickActionButton(
+    value: Int,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = SurfaceDark,
+        modifier = Modifier.size(100.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = "$value",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = TextWhite
             )
-        }
-        
-        // Content inside the gauge
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .padding(top = 40.dp), // Push text down
-            contentAlignment = Alignment.Center
-        ) {
-            content()
         }
     }
 }
@@ -485,95 +376,33 @@ fun GaugeView(
 fun PresetChip(preset: Preset, onClick: () -> Unit, onLongClick: () -> Unit) {
     Surface(
         modifier = Modifier
-            .height(56.dp)
+            .height(80.dp)
+            .width(120.dp)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        shape = RoundedCornerShape(16.dp),
+        color = SurfaceDark
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = preset.label,
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "|",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.outline
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "${preset.amount}kr",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                text = "${preset.amount} kr",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = TextWhite
             )
         }
-    }
-}
-
-@Composable
-fun AddPresetDialog(onDismiss: () -> Unit, onConfirm: (Int, String) -> Unit) {
-    var amount by remember { mutableStateOf("") }
-    var label by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Lägg till förinställning") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Belopp (kr)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = label,
-                    onValueChange = { label = it },
-                    label = { Text("Etikett (t.ex. Mellanmål)") }
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val amountInt = amount.toIntOrNull()
-                    if (amountInt != null && label.isNotBlank()) {
-                        onConfirm(amountInt, label)
-                    }
-                }
-            ) {
-                Text("Lägg till")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Avbryt")
-            }
-        }
-    )
-}
-
-@Composable
-fun QuickAddButton(amount: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.height(100.dp),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Text(
-            text = "$amount kr",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 
@@ -581,22 +410,22 @@ fun QuickAddButton(amount: Int, onClick: () -> Unit, modifier: Modifier = Modifi
 fun AddPresetChip(onClick: () -> Unit) {
     Surface(
         modifier = Modifier
-            .height(56.dp)
+            .height(80.dp)
+            .width(80.dp)
             .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+        shape = RoundedCornerShape(16.dp),
+        color = SurfaceDark.copy(alpha = 0.3f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, TextSecondary.copy(alpha = 0.3f))
     ) {
         Box(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Lägg till förinställning",
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                contentDescription = "Lägg till",
+                tint = TextWhite
             )
         }
     }
 }
+

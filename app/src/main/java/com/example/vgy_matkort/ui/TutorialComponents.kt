@@ -60,67 +60,74 @@ data class TutorialStepData(
         val steps = listOf(
             TutorialStepData(
                 title = "Välkommen till VGY Matkort",
-                description = "Här får du en överblick över ditt saldo. Denna mätare visar hur mycket du har kvar totalt att spendera.",
+                description = "Denna app hjälper dig att hålla koll på ditt matkortssaldo. Låt oss gå igenom de olika funktionerna tillsammans!",
+                highlightArea = HighlightArea.TANK_VIEW,
+                route = "home",
+                tankViewPage = 0
+            ),
+            TutorialStepData(
+                title = "Dagens Budget",
+                description = "Detta visar hur mycket du har råd att spendera just idag. Du får 70 kr varje skoldag som läggs till ditt saldo. Mätaren visar ditt aktuella saldo för dagen - håll dig inom gränsen så räcker pengarna!",
                 highlightArea = HighlightArea.TANK_VIEW,
                 route = "home",
                 tankViewPage = 0
             ),
             TutorialStepData(
                 title = "Daglig Budget",
-                description = "Swipa för att se din dagliga budget. Vi räknar ut hur mycket du kan spendera per dag baserat på kvarvarande skoldagar.",
+                description = "Din dagliga budget beräknas automatiskt genom att dela ditt totala saldo på antalet kvarvarande skoldagar. På så sätt vet du exakt hur mycket du kan spendera varje dag för att pengarna ska räcka till nästa lov!",
                 highlightArea = HighlightArea.TANK_VIEW,
                 route = "home",
                 tankViewPage = 1
             ),
             TutorialStepData(
                 title = "Veckobudget",
-                description = "Här ser du hur du ligger till denna vecka. Grönt betyder att du ligger bra till!",
+                description = "Veckovy visar hur mycket du har kvar att spendera denna vecka. Färgen indikerar din ekonomiska status: Grönt = du ligger bra till, Gult = var försiktig, Rött = du har överskridit budgeten.",
                 highlightArea = HighlightArea.TANK_VIEW,
                 route = "home",
                 tankViewPage = 2
             ),
             TutorialStepData(
                 title = "Periodbudget",
-                description = "En översikt för hela perioden fram till nästa lov. Planera dina inköp smart!",
+                description = "Periodbudgeten visar din totala ekonomi från nu till nästa skollov. Detta ger dig en långsiktig överblick så att du kan planera större inköp och se till att pengarna räcker hela perioden.",
                 highlightArea = HighlightArea.TANK_VIEW,
                 route = "home",
                 tankViewPage = 3
             ),
             TutorialStepData(
                 title = "Snabbval",
-                description = "Lägg snabbt till köp med dessa knappar. Perfekt när du står i kassan!",
+                description = "Snabbvalsknapparna låter dig registrera vanliga köp med ett enda tryck. Perfekt när du står i kassan och snabbt behöver logga ett köp! Tryck på en knapp så dras beloppet direkt från ditt saldo.",
                 highlightArea = HighlightArea.QUICK_ADD,
                 route = "home"
             ),
             TutorialStepData(
                 title = "Förinställningar",
-                description = "Spara dina vanligaste köp här, t.ex. 'Kaffe' eller 'Mellanmål'. Tryck på + för att skapa en ny.",
+                description = "Skapa egna förinställningar för dina vanligaste köp med anpassade namn och belopp. Till exempel 'Kaffe 25 kr' eller 'Lunch 45 kr'. Tryck på + för att lägga till en ny förinställning, och tryck på en befintlig för att snabbt registrera köpet.",
                 highlightArea = HighlightArea.PRESETS_LIST,
                 route = "home"
             ),
 
             TutorialStepData(
                 title = "Historik",
-                description = "Här kan du se alla dina tidigare transaktioner och ta bort felaktiga köp.",
+                description = "Historiken visar en komplett lista över alla dina transaktioner, sorterade efter datum. Här kan du granska dina utgifter och ta bort felaktigt registrerade köp genom att swipa eller trycka länge på en transaktion.",
                 highlightArea = HighlightArea.HISTORY_LIST,
                 route = "history"
             ),
             TutorialStepData(
                 title = "Statistik",
-                description = "Följ din saldoutveckling över tid med en graf. Se hur ditt saldo förändras dag för dag.",
+                description = "Statistikgrafen visar hur ditt saldo har utvecklats över tid. Varje punkt representerar ditt saldo vid dagens slut. Detta hjälper dig att upptäcka utgiftsmönster och se om du håller dig inom budgeten.",
                 highlightArea = HighlightArea.STATS_CHART,
                 route = "stats"
             ),
             TutorialStepData(
                 title = "Veckovis uppdelning",
-                description = "Här ser du en sammanställning för varje vecka. Klicka på en vecka för att se detaljer.",
+                description = "Den veckovisa uppdelningen ger dig en översikt över dina utgifter per vecka. Du kan se totala utgifter, antal transaktioner och genomsnittlig daglig kostnad. Tryck på en vecka för att se alla transaktioner från den perioden.",
                 highlightArea = HighlightArea.STATS_WEEKLY,
                 route = "stats"
             ),
             TutorialStepData(
                 title = "Inställningar",
-                description = "Här kan du ändra tema (mörkt/ljust), hantera lovdagar och justera ditt saldo manuellt.",
-                highlightArea = HighlightArea.SETTINGS_NAV_ITEM,
+                description = "I inställningarna kan du aktivera/avaktivera haptisk feedback, hantera skollov och lediga dagar, samt ange ditt aktuella kortsaldo manuellt. Du kan också återställa ditt saldo till 0 kr om du behöver börja om från början.",
+                highlightArea = HighlightArea.SETTINGS_SCREEN,
                 route = "settings"
             )
         )
