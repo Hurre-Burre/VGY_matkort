@@ -135,7 +135,7 @@ fun TransactionItem(transaction: Transaction, onDelete: () -> Unit, isHapticEnab
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
-                color = if (transaction.amount == 0) AccentGreen else PrimaryBlue,
+                color = if (transaction.amount == 0) AccentGreen else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             

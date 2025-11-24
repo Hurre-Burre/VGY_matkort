@@ -46,6 +46,7 @@ fun KeypadDialog(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imePadding() // Handle keyboard/navigation bar
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

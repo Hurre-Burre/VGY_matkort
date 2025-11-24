@@ -51,6 +51,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isHapticEnabled = MutableStateFlow(sharedPreferences.getBoolean("is_haptic_enabled", true))
     val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
 
+    private val _currentTheme = MutableStateFlow(
+        try {
+            com.example.vgy_matkort.ui.theme.AppTheme.valueOf(sharedPreferences.getString("app_theme", "Blue") ?: "Blue")
+        } catch (e: Exception) {
+            com.example.vgy_matkort.ui.theme.AppTheme.Blue
+        }
+    )
+    val currentTheme: StateFlow<com.example.vgy_matkort.ui.theme.AppTheme> = _currentTheme.asStateFlow()
+
+    fun setTheme(theme: com.example.vgy_matkort.ui.theme.AppTheme) {
+        _currentTheme.value = theme
+        sharedPreferences.edit().putString("app_theme", theme.name).apply()
+    }
+
     
     init {
         viewModelScope.launch {
@@ -311,7 +325,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     .sumOf { it.amount }
                 
                 val balance = accBudget - spentOnDay
-                points.add(ChartPoint(dayIndex++, balance))
+                points.add(ChartPoint(dayIndex++, balance, chartDate))
                 
                 chartDate = chartDate.plusDays(1)
             }
@@ -487,5 +501,6 @@ data class WeekSummary(
 
 data class ChartPoint(
     val dayIndex: Int,
-    val balance: Int
+    val balance: Int,
+    val date: LocalDate
 )

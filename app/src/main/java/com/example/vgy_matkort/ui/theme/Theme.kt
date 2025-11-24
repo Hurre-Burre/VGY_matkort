@@ -11,51 +11,71 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryBlue,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-    background = BackgroundGradientEnd, // Fallback
-    surface = SurfaceDark,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = TextWhite,
-    onSurface = TextWhite
+// App Theme Enum
+enum class AppTheme {
+    Blue, Green, Red, Orange, Purple, Pink
+}
+
+// CompositionLocal for Gradient Colors
+data class GradientColors(
+    val start: Color,
+    val mid: Color,
+    val end: Color
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = PrimaryBlue,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-    background = BackgroundGradientStart, // Fallback
-    surface = Color.White,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color.Black,
-    onSurface = Color.Black
-)
+val LocalGradientColors = androidx.compose.runtime.staticCompositionLocalOf {
+    GradientColors(BlueGradientStart, BlueGradientMid, BackgroundGradientEnd)
+}
 
 @Composable
 fun VGY_MatkortTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // Disable dynamic color to enforce our design
+    appTheme: AppTheme = AppTheme.Blue,
+    darkTheme: Boolean = isSystemInDarkTheme(), // Kept for compatibility, but we enforce dark style mostly
     content: @Composable () -> Unit
 ) {
-    // Force Dark Theme for the modern look, or respect system but with our palette
-    // The user requested a specific "modern" look which implies the dark gradient style.
-    // Let's default to the DarkColorScheme which we've tuned, but we can allow light mode if we want.
-    // However, the gradient background is best with dark theme.
-    // Let's use DarkColorScheme as base for now to match the "image" request.
-    
-    val colorScheme = DarkColorScheme
+    val (colorScheme, gradientColors) = when (appTheme) {
+        AppTheme.Blue -> Pair(
+            darkColorScheme(primary = BluePrimary, surface = SurfaceDark, background = BlueGradientStart),
+            GradientColors(BlueGradientStart, BlueGradientMid, BackgroundGradientEnd)
+        )
+        AppTheme.Green -> Pair(
+            darkColorScheme(primary = GreenPrimary, surface = SurfaceDark, background = GreenGradientStart),
+            GradientColors(GreenGradientStart, GreenGradientMid, BackgroundGradientEnd)
+        )
+        AppTheme.Red -> Pair(
+            darkColorScheme(primary = RedPrimary, surface = SurfaceDark, background = RedGradientStart),
+            GradientColors(RedGradientStart, RedGradientMid, BackgroundGradientEnd)
+        )
+        AppTheme.Orange -> Pair(
+            darkColorScheme(primary = OrangePrimary, surface = SurfaceDark, background = OrangeGradientStart),
+            GradientColors(OrangeGradientStart, OrangeGradientMid, BackgroundGradientEnd)
+        )
+        AppTheme.Purple -> Pair(
+            darkColorScheme(primary = PurplePrimary, surface = SurfaceDark, background = PurpleGradientStart),
+            GradientColors(PurpleGradientStart, PurpleGradientMid, BackgroundGradientEnd)
+        )
+        AppTheme.Pink -> Pair(
+            darkColorScheme(primary = PinkPrimary, surface = SurfaceDark, background = PinkGradientStart),
+            GradientColors(PinkGradientStart, PinkGradientMid, BackgroundGradientEnd)
+        )
+    }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+    // Merge with common colors
+    val finalColorScheme = colorScheme.copy(
+        onPrimary = Color.White,
+        onBackground = TextWhite,
+        onSurface = TextWhite,
+        surface = SurfaceDark // Ensure we use our transparent surface
     )
+
+    CompositionLocalProvider(LocalGradientColors provides gradientColors) {
+        MaterialTheme(
+            colorScheme = finalColorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }

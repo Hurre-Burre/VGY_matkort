@@ -43,6 +43,7 @@ import com.example.vgy_matkort.ui.theme.BackgroundGradientStart
 import com.example.vgy_matkort.ui.theme.SurfaceDark
 import com.example.vgy_matkort.ui.theme.TextSecondary
 import com.example.vgy_matkort.ui.theme.TextWhite
+import com.example.vgy_matkort.ui.theme.SurfaceGlass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,47 +118,21 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(BackgroundGradientStart, BackgroundGradientEnd)
-                )
-            )
     ) {
         Scaffold(
             containerColor = Color.Transparent,
-            topBar = {
-                TopAppBar(
-                    title = { }, // Empty title for cleaner look
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                    actions = {
-                        IconButton(
-                            onClick = {
-                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onShowTutorial()
-                            },
-                            modifier = Modifier.onGloballyPositioned { 
-                                onRegisterHighlight("settings_theme", it.boundsInRoot())
-                            }
-                        ) {
-                            Icon(
-                                Icons.Default.Info, 
-                                contentDescription = "Hjälp / Tutorial",
-                                tint = TextWhite
-                            )
-                        }
-                    }
-                )
-            },
             floatingActionButton = {}
         ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 0.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 0.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Spacer removed to fix double padding (Scaffold innerPadding already handles this)
                 // Balance Section (Replaces TankView)
                 Box(modifier = Modifier.onGloballyPositioned { 
                     onRegisterHighlight("tank_view", it.boundsInRoot())
@@ -174,32 +149,35 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
+                        .padding(horizontal = 16.dp)
                         .onGloballyPositioned {
                             onRegisterHighlight("quick_add_buttons", it.boundsInRoot())
                         },
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     QuickActionButton(
                         value = 50,
                         onClick = {
                             if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onAddTransaction(50)
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                     QuickActionButton(
                         value = 70,
                         onClick = {
                             if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onAddTransaction(70)
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                     QuickActionButton(
                         value = 90,
                         onClick = {
                             if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onAddTransaction(90)
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                 }
                 
@@ -242,9 +220,36 @@ fun HomeScreen(
                         })
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(48.dp))
+            }
+            
+            // Settings/Help Button positioned manually
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(top = 0.dp, end = 8.dp) // Reduced top padding as requested
+            ) {
+                IconButton(
+                    onClick = {
+                        if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onShowTutorial()
+                    },
+                    modifier = Modifier.onGloballyPositioned { 
+                        onRegisterHighlight("settings_theme", it.boundsInRoot())
+                    }
+                ) {
+                    Icon(
+                        Icons.Default.Info, 
+                        contentDescription = "Hjälp / Tutorial",
+                        tint = TextWhite
+                    )
+                }
             }
         }
     }
+}
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -320,8 +325,8 @@ fun BalanceCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp)
-            .padding(vertical = 32.dp),
+            .aspectRatio(1.4f) // Responsive height based on width
+            .padding(vertical = 16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -352,13 +357,15 @@ fun BalanceCard(
 @Composable
 fun QuickActionButton(
     value: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         onClick = onClick,
         shape = CircleShape,
-        color = SurfaceDark,
-        modifier = Modifier.size(100.dp)
+        color = SurfaceGlass, // Use new Glass color
+        tonalElevation = 0.dp, // Ensure transparency works
+        modifier = modifier.aspectRatio(1f) // Keep it circular and responsive
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
@@ -377,13 +384,14 @@ fun PresetChip(preset: Preset, onClick: () -> Unit, onLongClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .height(80.dp)
-            .width(120.dp)
+            .widthIn(min = 100.dp) // Flexible width with minimum
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(16.dp),
-        color = SurfaceDark
+        color = SurfaceGlass, // Use new Glass color
+        tonalElevation = 0.dp // Ensure transparency works
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -415,6 +423,7 @@ fun AddPresetChip(onClick: () -> Unit) {
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = SurfaceDark.copy(alpha = 0.3f),
+        tonalElevation = 0.dp, // Ensure transparency works
         border = androidx.compose.foundation.BorderStroke(1.dp, TextSecondary.copy(alpha = 0.3f))
     ) {
         Box(

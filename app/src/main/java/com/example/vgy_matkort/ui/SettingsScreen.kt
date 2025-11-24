@@ -1,6 +1,8 @@
 package com.example.vgy_matkort.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +30,14 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.example.vgy_matkort.ui.theme.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import com.example.vgy_matkort.ui.components.AddHolidayDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,7 +51,9 @@ fun SettingsScreen(
     onRegisterHighlight: (String, Rect) -> Unit,
     onNavigateToHolidays: () -> Unit = {},
     isHapticEnabled: Boolean,
-    onToggleHaptic: (Boolean) -> Unit
+    onToggleHaptic: (Boolean) -> Unit,
+    currentTheme: com.example.vgy_matkort.ui.theme.AppTheme,
+    onSetTheme: (com.example.vgy_matkort.ui.theme.AppTheme) -> Unit
 ) {
 
     var showSetBalanceDialog by remember { mutableStateOf(false) }
@@ -87,36 +99,94 @@ fun SettingsScreen(
 
     Scaffold(
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "Inställningar",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
-                        color = TextWhite
-                    ) 
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Tillbaka", tint = TextWhite)
-                    }
-                }
-            )
-        }
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
-                .onGloballyPositioned { coordinates ->
-                    onRegisterHighlight("settings_screen", coordinates.boundsInRoot())
-                }
-                .padding(20.dp),
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Haptic Feedback Card
+            // Status bar spacer
+            Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+            
+            // Header
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "Inställningar",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 32.sp,
+                    color = TextWhite
+                )
+            }
+
+            // Theme Selector Card
+            SettingCard {
+                Column {
+                    Text(
+                        "Tema",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        color = TextWhite
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                    ) {
+                        com.example.vgy_matkort.ui.theme.AppTheme.values().forEach { theme ->
+                            val color = when (theme) {
+                                com.example.vgy_matkort.ui.theme.AppTheme.Blue -> com.example.vgy_matkort.ui.theme.BluePrimary
+                                com.example.vgy_matkort.ui.theme.AppTheme.Green -> com.example.vgy_matkort.ui.theme.GreenPrimary
+                                com.example.vgy_matkort.ui.theme.AppTheme.Red -> com.example.vgy_matkort.ui.theme.RedPrimary
+                                com.example.vgy_matkort.ui.theme.AppTheme.Orange -> com.example.vgy_matkort.ui.theme.OrangePrimary
+                                com.example.vgy_matkort.ui.theme.AppTheme.Purple -> com.example.vgy_matkort.ui.theme.PurplePrimary
+                                com.example.vgy_matkort.ui.theme.AppTheme.Pink -> com.example.vgy_matkort.ui.theme.PinkPrimary
+                            }
+                            
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(color)
+                                        .clickable { 
+                                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onSetTheme(theme) 
+                                        }
+                                        .then(
+                                            if (currentTheme == theme) {
+                                                Modifier.border(2.dp, TextWhite, androidx.compose.foundation.shape.CircleShape)
+                                            } else {
+                                                Modifier
+                                            }
+                                        )
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = theme.name,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (currentTheme == theme) TextWhite else TextTertiary,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             SettingCard {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -146,8 +216,8 @@ fun SettingsScreen(
                             onToggleHaptic(it)
                         },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = PrimaryBlue,
-                            checkedTrackColor = PrimaryBlue.copy(alpha = 0.3f),
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                             uncheckedThumbColor = TextTertiary,
                             uncheckedTrackColor = SurfaceDark.copy(alpha = 0.5f)
                         )
@@ -181,8 +251,8 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryBlue.copy(alpha = 0.2f),
-                            contentColor = PrimaryBlue
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                            contentColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Text(
@@ -221,7 +291,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryBlue,
+                            containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = TextWhite
                         )
                     ) {

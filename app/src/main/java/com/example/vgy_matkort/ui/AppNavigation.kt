@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.example.vgy_matkort.ui.theme.BackgroundGradientEnd
 import com.example.vgy_matkort.ui.theme.BackgroundGradientStart
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Home : Screen("home", "Hem", Icons.Default.Home)
@@ -49,7 +51,9 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 fun AppNavigation(
     viewModel: MainViewModel,
     isDarkTheme: Boolean,
-    onToggleTheme: (Boolean) -> Unit
+    onToggleTheme: (Boolean) -> Unit,
+    currentTheme: com.example.vgy_matkort.ui.theme.AppTheme,
+    onSetTheme: (com.example.vgy_matkort.ui.theme.AppTheme) -> Unit
 ) {
     val navController = rememberNavController()
     val uiState by viewModel.uiState.collectAsState()
@@ -95,12 +99,14 @@ fun AppNavigation(
 
 
 
+    val gradientColors = com.example.vgy_matkort.ui.theme.LocalGradientColors.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(BackgroundGradientStart, BackgroundGradientEnd)
+                    colors = listOf(gradientColors.start, gradientColors.mid, gradientColors.end)
                 )
             )
     ) {
@@ -113,6 +119,7 @@ fun AppNavigation(
                 ) {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
+                    val haptic = LocalHapticFeedback.current
                     items.forEach { screen ->
                         NavigationBarItem(
                             icon = { Icon(screen.icon, contentDescription = screen.title) },
@@ -124,6 +131,9 @@ fun AppNavigation(
                                 indicatorColor = MaterialTheme.colorScheme.surfaceVariant
                             ),
                             onClick = {
+                                if (isHapticEnabled) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
@@ -193,7 +203,9 @@ fun AppNavigation(
                         onRegisterHighlight = viewModel::registerHighlight,
                         onNavigateToHolidays = { navController.navigate("manage_holidays") },
                         isHapticEnabled = isHapticEnabled,
-                        onToggleHaptic = viewModel::toggleHaptic
+                        onToggleHaptic = viewModel::toggleHaptic,
+                        currentTheme = currentTheme,
+                        onSetTheme = onSetTheme
                     )
                 }
                 composable("manage_holidays") {

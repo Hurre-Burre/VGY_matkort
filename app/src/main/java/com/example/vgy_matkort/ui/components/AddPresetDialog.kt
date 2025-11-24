@@ -41,12 +41,13 @@ fun AddPresetDialog(
             modifier = Modifier.fillMaxSize(),
             color = Color(0xFF121212)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .imePadding() // Handle keyboard
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                 // Header
                 Row(
                     modifier = Modifier
@@ -91,52 +92,56 @@ fun AddPresetDialog(
                     )
                 } else {
                     // Name Input - Modern Design
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = if (name.isEmpty()) "Namn" else name,
-                            style = MaterialTheme.typography.displayLarge.copy(
+                        androidx.compose.foundation.text.BasicTextField(
+                            value = name,
+                            onValueChange = { name = it },
+                            textStyle = MaterialTheme.typography.displayLarge.copy(
                                 fontSize = 48.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = TextWhite,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             ),
-                            color = if (name.isEmpty()) TextWhite.copy(alpha = 0.3f) else TextWhite,
-                            modifier = Modifier.padding(horizontal = 32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Box(
                             modifier = Modifier
-                                .width(200.dp)
-                                .height(2.dp)
-                                .background(TextWhite.copy(alpha = 0.5f))
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "t.ex. Mellanmål, Lunch, Fika",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextWhite.copy(alpha = 0.5f)
+                                .fillMaxWidth()
+                                .padding(horizontal = 32.dp),
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            singleLine = true,
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(TextWhite),
+                            decorationBox = { innerTextField ->
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    if (name.isEmpty()) {
+                                        Text(
+                                            text = "Namn",
+                                            style = MaterialTheme.typography.displayLarge.copy(
+                                                fontSize = 48.sp,
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = TextWhite.copy(alpha = 0.3f)
+                                        )
+                                    } else {
+                                        innerTextField()
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .width(200.dp)
+                                            .height(2.dp)
+                                            .background(TextWhite.copy(alpha = 0.5f))
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "t.ex. Mellanmål, Lunch, Fika",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextWhite.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
                         )
                     }
-                    
-                    // Hidden TextField for keyboard input
-                    androidx.compose.foundation.text.BasicTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        textStyle = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = 48.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextWhite,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp)
-                            .offset(y = (-200).dp),
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                        singleLine = true,
-                        cursorBrush = androidx.compose.ui.graphics.SolidColor(TextWhite)
-                    )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))

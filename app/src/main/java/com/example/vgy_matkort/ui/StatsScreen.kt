@@ -36,6 +36,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.time.format.DateTimeFormatter
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import kotlin.math.pow
 import com.example.vgy_matkort.ui.theme.*
 
@@ -94,7 +97,7 @@ fun StatsScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(280.dp)
+                .aspectRatio(1.3f) // Responsive height
                 .onGloballyPositioned { coordinates ->
                     onRegisterHighlight("stats_chart", coordinates.boundsInRoot())
                 },
@@ -230,6 +233,10 @@ fun ModernBalanceChart(data: List<ChartPoint>, initialBalance: Int, totalDays: I
         return
     }
     
+
+    
+    val haptic = LocalHapticFeedback.current
+    val primaryColor = MaterialTheme.colorScheme.primary
     var touchedIndex by remember { mutableStateOf<Int?>(null) }
     
     Box(modifier = Modifier.fillMaxSize()) {
@@ -257,7 +264,11 @@ fun ModernBalanceChart(data: List<ChartPoint>, initialBalance: Int, totalDays: I
                             
                             val relativeX = change.position.x - marginLeft
                             val index = (relativeX / stepX).toInt().coerceIn(0, data.size - 1)
-                            touchedIndex = index
+                            
+                            if (touchedIndex != index) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                touchedIndex = index
+                            }
                         },
                         onDragEnd = {
                             touchedIndex = null
@@ -365,7 +376,7 @@ fun ModernBalanceChart(data: List<ChartPoint>, initialBalance: Int, totalDays: I
             
             drawPath(
                 path = path,
-                color = ChartLineColor,
+                color = primaryColor,
                 style = Stroke(width = 3f)
             )
             
@@ -386,7 +397,7 @@ fun ModernBalanceChart(data: List<ChartPoint>, initialBalance: Int, totalDays: I
                     
                     // Circle at data point
                     drawCircle(
-                        color = ChartLineColor,
+                        color = primaryColor,
                         radius = 8f,
                         center = Offset(x, y)
                     )
@@ -413,15 +424,17 @@ fun ModernBalanceChart(data: List<ChartPoint>, initialBalance: Int, totalDays: I
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        val dateFormatter = DateTimeFormatter.ofPattern("EEE d MMM", Locale("sv", "SE"))
                         Text(
-                            text = "Dag ${point.dayIndex + 1}",
+                            text = point.date.format(dateFormatter).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "${point.balance} kr",
                             style = MaterialTheme.typography.titleMedium,

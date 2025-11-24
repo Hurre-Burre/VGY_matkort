@@ -25,8 +25,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel: MainViewModel = viewModel()
             val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+            val currentTheme by viewModel.currentTheme.collectAsState()
             
-            VGY_MatkortTheme(darkTheme = isDarkTheme) {
+            VGY_MatkortTheme(appTheme = currentTheme, darkTheme = isDarkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -34,7 +35,9 @@ class MainActivity : ComponentActivity() {
                     AppNavigation(
                         viewModel = viewModel,
                         isDarkTheme = isDarkTheme,
-                        onToggleTheme = viewModel::toggleTheme
+                        onToggleTheme = viewModel::toggleTheme,
+                        currentTheme = currentTheme,
+                        onSetTheme = viewModel::setTheme
                     )
                 }
             }
