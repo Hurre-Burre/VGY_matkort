@@ -7,7 +7,9 @@ import androidx.room.PrimaryKey
 data class Transaction(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val amount: Int,
-    val timestamp: Long
+    val timestamp: Long,
+    val isHidden: Boolean = false,
+    val description: String? = null
 )
 
 @Entity

@@ -3,6 +3,8 @@ package com.example.vgy_matkort.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -45,7 +47,9 @@ fun AddPresetDialog(
                     modifier = Modifier
                         .fillMaxSize()
                         .imePadding() // Handle keyboard
-                        .padding(16.dp),
+                        .navigationBarsPadding() // Handle navigation bar
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()), // Allow scrolling if needed
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                 // Header
@@ -85,11 +89,13 @@ fun AddPresetDialog(
                     Text(
                         text = if (amountString.isEmpty()) "0 kr" else "$amountString kr",
                         style = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = 64.sp,
+                            fontSize = 56.sp,
                             fontWeight = FontWeight.Bold
                         ),
                         color = TextWhite
                     )
+                    
+                    Spacer(modifier = Modifier.height(48.dp))
                 } else {
                     // Name Input - Modern Design
                     Box(
@@ -134,7 +140,7 @@ fun AddPresetDialog(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = "t.ex. Mellanmål, Lunch, Fika",
+                                        text = "t.ex. Nocco, Coca-Cola, Munk",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = TextWhite.copy(alpha = 0.5f)
                                     )
@@ -144,7 +150,11 @@ fun AddPresetDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                if (step == 1) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
 
                 // Confirm Button
                 Button(
@@ -179,13 +189,17 @@ fun AddPresetDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                if (step == 2) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 if (step == 1) {
-                    // Keypad
+                    // Keypad - Reduced spacing
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp) // Reduced from 16dp
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -242,7 +256,7 @@ fun AddPresetDialog(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(96.dp))
                 }
             }
         }

@@ -52,7 +52,7 @@ interface HolidayDao {
     suspend fun deleteAll()
 }
 
-@Database(entities = [Transaction::class, Preset::class, Holiday::class], version = 2, exportSchema = false)
+@Database(entities = [Transaction::class, Preset::class, Holiday::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun presetDao(): PresetDao

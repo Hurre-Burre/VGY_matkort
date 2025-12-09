@@ -110,8 +110,6 @@ fun SettingsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Status bar spacer
-            Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             
             // Header
             Box(
@@ -515,9 +513,16 @@ fun ManageHolidaysScreen(
 fun HolidayItem(holiday: Holiday, onDelete: () -> Unit, isHapticEnabled: Boolean) {
     val haptic = LocalHapticFeedback.current
     val dateFormat = DateTimeFormatter.ofPattern("d MMM")
+    val dateFormatWithYear = DateTimeFormatter.ofPattern("d MMM yyyy")
     val start = Instant.ofEpochMilli(holiday.startDate).atZone(ZoneId.systemDefault()).toLocalDate()
     val end = Instant.ofEpochMilli(holiday.endDate).atZone(ZoneId.systemDefault()).toLocalDate()
-    val dateRange = "${start.format(dateFormat)} - ${end.format(dateFormat)}"
+    
+    // Smart date range formatting: show year only once if same year
+    val dateRange = if (start.year == end.year) {
+        "${start.format(dateFormat)} - ${end.format(dateFormatWithYear)}"
+    } else {
+        "${start.format(dateFormatWithYear)} - ${end.format(dateFormatWithYear)}"
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),

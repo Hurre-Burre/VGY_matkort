@@ -199,6 +199,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             emptyList()
         }
         
+        val visiblePeriodTransactions = periodTransactions.filter { !it.isHidden }
+        
         val spent = periodTransactions.sumOf { it.amount }
         val currentBalance = accumulatedBudget - spent
         
@@ -234,7 +236,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 
                 // Calculate spent from startDate to weekDate
-                val spentSinceStart = periodTransactions
+                val spentSinceStart = visiblePeriodTransactions
                     .filter { 
                         val txDate = java.time.Instant.ofEpochMilli(it.timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
                         !txDate.isBefore(startDate) && !txDate.isAfter(weekDate)
@@ -283,7 +285,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             currentWeekAccumulated = daysInWeek * 70
             
             // Calculate spent just for this week
-            currentWeekSpent = transactions.filter { 
+            currentWeekSpent = visiblePeriodTransactions.filter { 
                 val txDate = java.time.Instant.ofEpochMilli(it.timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
                 !txDate.isBefore(startOfWeek) && !txDate.isAfter(today)
             }.sumOf { it.amount }
@@ -408,12 +410,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun resetBalance() {
         viewModelScope.launch {
             val currentBalance = uiState.value.currentBalance
-            if (currentBalance != 0) {
-                // To reset to 0, we need to subtract the current balance.
-                // If balance is 100, we add transaction of 100 (spent).
-                // If balance is -50, we add transaction of -50 (refund/correction).
-                transactionDao.insert(Transaction(amount = currentBalance, timestamp = System.currentTimeMillis()))
-            }
+            // To reset to 0, we need to subtract the current balance.
+            // If balance is 100, we add transaction of 100 (spent).
+            // If balance is -50, we add transaction of -50 (refund/correction).
+            // Even if balance is 0, we log it so user sees "Återställt saldo" in history.
+            transactionDao.insert(Transaction(amount = currentBalance, timestamp = System.currentTimeMillis(), description = "Återställt saldo"))
         }
     }
     
@@ -424,7 +425,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // If current is 100 and target is 150, correction = -50 (add money)
             // If current is 100 and target is 50, correction = 50 (subtract money)
             if (correction != 0) {
-                transactionDao.insert(Transaction(amount = correction, timestamp = System.currentTimeMillis()))
+                transactionDao.insert(Transaction(amount = correction, timestamp = System.currentTimeMillis(), isHidden = true, description = "Manuell justering"))
             }
         }
     }
@@ -436,7 +437,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // If remaining is 1000 and target is 800, correction = 200 (we spent 200 more)
             // If remaining is 1000 and target is 1200, correction = -200 (we spent 200 less)
             if (correction != 0) {
-                transactionDao.insert(Transaction(amount = correction, timestamp = System.currentTimeMillis()))
+                transactionDao.insert(Transaction(amount = correction, timestamp = System.currentTimeMillis(), isHidden = true, description = "Periodbudget justering"))
             }
         }
     }

@@ -81,7 +81,7 @@ fun KeypadDialog(
                 Text(
                     text = if (amountString.isEmpty()) "0 kr" else "$amountString kr",
                     style = MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 64.sp,
+                        fontSize = 56.sp,
                         fontWeight = FontWeight.Bold
                     ),
                     color = TextWhite
@@ -92,7 +92,7 @@ fun KeypadDialog(
                     subtitle()
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(48.dp))
 
                 // Confirm Button
                 Button(
@@ -119,12 +119,12 @@ fun KeypadDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Keypad
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -182,7 +182,7 @@ fun KeypadDialog(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(96.dp))
             }
         }
     }

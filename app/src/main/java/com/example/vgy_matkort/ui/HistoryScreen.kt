@@ -77,7 +77,9 @@ fun HistoryScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(transactions.sortedByDescending { it.timestamp }) { transaction ->
+                // Filter out balance corrections (amount == 0) unless they have a description, and hidden transactions
+                val displayTransactions = transactions.filter { (it.amount != 0 || it.description != null) && !it.isHidden }
+                items(displayTransactions.sortedByDescending { it.timestamp }) { transaction ->
                     TransactionItem(
                         transaction = transaction,
                         onDelete = { onDeleteTransaction(transaction) },
@@ -129,15 +131,26 @@ fun TransactionItem(transaction: Transaction, onDelete: () -> Unit, isHapticEnab
                 )
             }
             
-            // Middle: Amount
-            Text(
-                text = if (transaction.amount == 0) "0 kr" else "-${transaction.amount} kr",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                color = if (transaction.amount == 0) AccentGreen else MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+            // Middle: Amount or Description
+            if (transaction.description != null) {
+                Text(
+                    text = transaction.description,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            } else {
+                Text(
+                    text = if (transaction.amount == 0) "0 kr" else "-${transaction.amount} kr",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = if (transaction.amount == 0) AccentGreen else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
             
             // Right side: Delete button with X
             IconButton(

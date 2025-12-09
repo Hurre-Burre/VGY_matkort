@@ -1,6 +1,9 @@
 package com.example.vgy_matkort.ui
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.material.icons.Icons
@@ -19,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -39,6 +43,7 @@ import com.example.vgy_matkort.ui.theme.BackgroundGradientEnd
 import com.example.vgy_matkort.ui.theme.BackgroundGradientStart
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Home : Screen("home", "Hem", Icons.Default.Home)
@@ -47,6 +52,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Settings : Screen("settings", "Inställningar", Icons.Default.Settings)
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppNavigation(
     viewModel: MainViewModel,
@@ -100,6 +106,31 @@ fun AppNavigation(
 
 
     val gradientColors = com.example.vgy_matkort.ui.theme.LocalGradientColors.current
+    val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
+    
+    // Create pager state for main screens (excluding manage_holidays)
+    val pagerState = rememberPagerState(pageCount = { items.size })
+    
+    // Sync pager with navigation
+    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
+        if (!pagerState.isScrollInProgress) {
+            val targetRoute = items[pagerState.currentPage].route
+            val currentRoute = navController.currentBackStackEntry?.destination?.route
+            if (targetRoute != currentRoute) {
+                if (isHapticEnabled) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+                navController.navigate(targetRoute) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -119,8 +150,7 @@ fun AppNavigation(
                 ) {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
-                    val haptic = LocalHapticFeedback.current
-                    items.forEach { screen ->
+                    items.forEachIndexed { index, screen ->
                         NavigationBarItem(
                             icon = { Icon(screen.icon, contentDescription = screen.title) },
                             label = { Text(screen.title) },
@@ -134,12 +164,8 @@ fun AppNavigation(
                                 if (isHapticEnabled) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 }
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
+                                scope.launch {
+                                    pagerState.animateScrollToPage(index)
                                 }
                             },
                             modifier = if (screen == Screen.Settings) {
@@ -154,13 +180,13 @@ fun AppNavigation(
                 }
             }
         ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = Screen.Home.route,
+            // HorizontalPager for swipeable main screens
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier.padding(innerPadding)
-            ) {
-                composable(Screen.Home.route) {
-                    HomeScreen(
+            ) { page ->
+                when (page) {
+                    0 -> HomeScreen(
                         uiState = uiState,
                         transactions = transactions,
                         presets = presets,
@@ -177,24 +203,18 @@ fun AppNavigation(
                         onRegisterHighlight = viewModel::registerHighlight,
                         isHapticEnabled = isHapticEnabled
                     )
-                }
-                composable(Screen.History.route) {
-                    HistoryScreen(
+                    1 -> HistoryScreen(
                         transactions = transactions,
                         onDeleteTransaction = viewModel::deleteTransaction,
                         onRegisterHighlight = viewModel::registerHighlight,
                         isHapticEnabled = isHapticEnabled
                     )
-                }
-                composable(Screen.Stats.route) {
-                    StatsScreen(
+                    2 -> StatsScreen(
                         uiState = uiState,
                         transactions = transactions,
                         onRegisterHighlight = viewModel::registerHighlight
                     )
-                }
-                composable(Screen.Settings.route) {
-                    SettingsScreen(
+                    3 -> SettingsScreen(
                         isDarkTheme = isDarkTheme,
                         onToggleTheme = onToggleTheme,
                         onNavigateBack = { navController.popBackStack() },
@@ -208,6 +228,18 @@ fun AppNavigation(
                         onSetTheme = onSetTheme
                     )
                 }
+            }
+            
+            // Keep NavHost for sub-screens like manage_holidays
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Home.route,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable(Screen.Home.route) { /* Handled by pager */ }
+                composable(Screen.History.route) { /* Handled by pager */ }
+                composable(Screen.Stats.route) { /* Handled by pager */ }
+                composable(Screen.Settings.route) { /* Handled by pager */ }
                 composable("manage_holidays") {
                     ManageHolidaysScreen(
                         holidays = holidays,

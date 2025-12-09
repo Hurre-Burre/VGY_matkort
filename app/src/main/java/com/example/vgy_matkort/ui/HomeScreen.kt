@@ -326,7 +326,7 @@ fun BalanceCard(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1.4f) // Responsive height based on width
-            .padding(vertical = 16.dp),
+            .padding(vertical = 20.dp), // Increased padding for more breathing room
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -334,22 +334,54 @@ fun BalanceCard(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
-            color = TextSecondary
+            color = TextSecondary,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "$amount kr",
-            style = MaterialTheme.typography.displayLarge.copy(
-                fontSize = 72.sp
-            ),
-            fontWeight = FontWeight.Bold,
-            color = TextWhite
-        )
+        
+        // Responsive amount text with auto-sizing
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            var fontSize by remember { mutableStateOf(72.sp) }
+            var readyToDraw by remember { mutableStateOf(false) }
+            
+            Text(
+                text = "$amount kr",
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontSize = fontSize,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                ),
+                fontWeight = FontWeight.Bold,
+                color = if (readyToDraw) TextWhite else Color.Transparent,
+                maxLines = 1,
+                softWrap = false,
+                onTextLayout = { textLayoutResult ->
+                    if (textLayoutResult.didOverflowWidth) {
+                        if (fontSize > 32.sp) {
+                            fontSize *= 0.9f
+                        }
+                    } else {
+                        readyToDraw = true
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = subtitle,
             style = MaterialTheme.typography.titleMedium,
-            color = TextSecondary
+            color = TextSecondary,
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
     }
 }
