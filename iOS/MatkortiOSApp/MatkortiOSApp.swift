@@ -22,15 +22,10 @@ struct MatkortiOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            TabView {
-                HomeView().tabItem { Label("Hem", systemImage: "house") }
-                HistoryView().tabItem { Label("Historik", systemImage: "list.bullet") }
-                StatsView().tabItem { Label("Statistik", systemImage: "chart.line.uptrend.xyaxis") }
-                SettingsView().tabItem { Label("Inställningar", systemImage: "gearshape") }
-            }
-            .environmentObject(vm)
-            .tint(accentColor(for: vm.session.theme))
-            .preferredColorScheme(vm.session.isDarkTheme ? .dark : .light)
+            AppContainerView()
+                .environmentObject(vm)
+                .tint(accentColor(for: vm.session.theme))
+                .preferredColorScheme(vm.session.isDarkTheme ? .dark : .light)
         }
     }
 }

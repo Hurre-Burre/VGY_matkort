@@ -1,8 +1,126 @@
 import SwiftUI
+import UIKit
 import MatkortCore
+
+enum AppTab: Int, CaseIterable {
+    case home
+    case history
+    case stats
+    case settings
+}
+
+struct TutorialStep: Identifiable {
+    let id: Int
+    let tab: AppTab
+    let title: String
+    let body: String
+}
+
+private let tutorialSteps: [TutorialStep] = [
+    .init(id: 0, tab: .home, title: "Välkommen till VGY Matkort", body: "Appen hjälper dig hålla saldo, dagsbudget och periodbudget synkat med skolans lov."),
+    .init(id: 1, tab: .home, title: "Snabbval och presets", body: "Använd 50/70/90-knapparna eller egna presets för att registrera köp snabbt."),
+    .init(id: 2, tab: .history, title: "Historik", body: "Här ser du alla synliga transaktioner. Dolda korrigeringar påverkar saldo men visas inte här."),
+    .init(id: 3, tab: .stats, title: "Interaktiv statistik", body: "Dra fingret över grafen för att se saldo dag för dag, precis som i Android."),
+    .init(id: 4, tab: .settings, title: "Inställningar", body: "Byt tema, justera saldo/periodbudget, hantera lov och starta tutorialen igen när som helst.")
+]
+
+struct AppContainerView: View {
+    @EnvironmentObject private var vm: MatkortViewModel
+    @State private var selectedTab: AppTab = .home
+    @State private var tutorialIndex = 0
+    @State private var showTutorial = false
+
+    var body: some View {
+        ZStack {
+            TabView(selection: $selectedTab) {
+                HomeView(showTutorial: $showTutorial)
+                    .tabItem { Label("Hem", systemImage: "house") }
+                    .tag(AppTab.home)
+
+                HistoryView()
+                    .tabItem { Label("Historik", systemImage: "list.bullet") }
+                    .tag(AppTab.history)
+
+                StatsView()
+                    .tabItem { Label("Statistik", systemImage: "chart.line.uptrend.xyaxis") }
+                    .tag(AppTab.stats)
+
+                SettingsView(showTutorial: $showTutorial)
+                    .tabItem { Label("Inställningar", systemImage: "gearshape") }
+                    .tag(AppTab.settings)
+            }
+            .gesture(tabSwipeGesture)
+
+            if showTutorial {
+                tutorialOverlay
+            }
+        }
+        .onAppear {
+            if !vm.session.hasSeenTutorial {
+                tutorialIndex = 0
+                selectedTab = tutorialSteps[0].tab
+                showTutorial = true
+            }
+        }
+        .onChange(of: tutorialIndex) {
+            guard tutorialIndex >= 0, tutorialIndex < tutorialSteps.count else { return }
+            withAnimation { selectedTab = tutorialSteps[tutorialIndex].tab }
+        }
+    }
+
+    private var tabSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 25, coordinateSpace: .local)
+            .onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height), !showTutorial else { return }
+                if value.translation.width < -40 {
+                    selectedTab = AppTab(rawValue: min((selectedTab.rawValue + 1), AppTab.allCases.count - 1)) ?? selectedTab
+                } else if value.translation.width > 40 {
+                    selectedTab = AppTab(rawValue: max((selectedTab.rawValue - 1), 0)) ?? selectedTab
+                }
+            }
+    }
+
+    private var tutorialOverlay: some View {
+        let step = tutorialSteps[tutorialIndex]
+        return ZStack {
+            Color.black.opacity(0.5).ignoresSafeArea()
+            VStack(spacing: 14) {
+                Text(step.title).font(.title3.bold()).multilineTextAlignment(.center)
+                Text(step.body).font(.body).multilineTextAlignment(.center)
+                HStack {
+                    Button(tutorialIndex == 0 ? "Hoppa över" : "Tillbaka") {
+                        if tutorialIndex == 0 {
+                            finishTutorial()
+                        } else {
+                            tutorialIndex -= 1
+                        }
+                    }
+                    Spacer()
+                    Button(tutorialIndex == tutorialSteps.count - 1 ? "Klar" : "Nästa") {
+                        if tutorialIndex == tutorialSteps.count - 1 {
+                            finishTutorial()
+                        } else {
+                            tutorialIndex += 1
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
+            .padding(18)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .padding(.horizontal, 20)
+        }
+    }
+
+    private func finishTutorial() {
+        showTutorial = false
+        vm.updateSession { $0.hasSeenTutorial = true }
+    }
+}
 
 struct HomeView: View {
     @EnvironmentObject private var vm: MatkortViewModel
+    @Binding var showTutorial: Bool
     @State private var showAddPreset = false
 
     var body: some View {
@@ -25,17 +143,30 @@ struct HomeView: View {
                         ScrollView(.horizontal) {
                             HStack {
                                 ForEach(vm.presets) { p in
-                                    Button("\(p.label) \(p.amount) kr") { vm.addTransaction(p.amount) }
-                                        .buttonStyle(.bordered)
-                                        .contextMenu { Button("Ta bort", role: .destructive) { vm.deletePreset(p) } }
+                                    Button("\(p.label) \(p.amount) kr") {
+                                        hapticTap()
+                                        vm.addTransaction(p.amount)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .contextMenu { Button("Ta bort", role: .destructive) { vm.deletePreset(p) } }
                                 }
-                                Button("+ Lägg till") { showAddPreset = true }.buttonStyle(.borderedProminent)
+                                Button("+ Lägg till") { showAddPreset = true }
+                                    .buttonStyle(.borderedProminent)
                             }
                         }
                     }
                 }.padding()
             }
             .navigationTitle("VGY Matkort")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showTutorial = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
+                }
+            }
             .sheet(isPresented: $showAddPreset) { AddPresetSheet() }
         }
     }
@@ -49,9 +180,17 @@ struct HomeView: View {
     }
 
     private func quick(_ amount: Int) -> some View {
-        Button("\(amount)") { vm.addTransaction(amount) }
-            .buttonStyle(.borderedProminent)
-            .frame(maxWidth: .infinity)
+        Button("\(amount)") {
+            hapticTap()
+            vm.addTransaction(amount)
+        }
+        .buttonStyle(.borderedProminent)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func hapticTap() {
+        guard vm.session.isHapticEnabled else { return }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 }
 
@@ -82,6 +221,8 @@ struct HistoryView: View {
 
 struct StatsView: View {
     @EnvironmentObject private var vm: MatkortViewModel
+    @State private var selectedPoint: ChartPoint?
+
     var body: some View {
         NavigationStack {
             List {
@@ -89,6 +230,17 @@ struct StatsView: View {
                     LabeledContent("Nuvarande", value: "\(vm.uiState.currentBalance) kr")
                     LabeledContent("Per dag", value: "\(vm.uiState.dailyAvailable) kr")
                 }
+
+                Section("Saldoutveckling") {
+                    InteractiveLineChart(points: vm.uiState.chartData, selectedPoint: $selectedPoint)
+                        .frame(height: 220)
+                    if let point = selectedPoint {
+                        Text("\(point.date.formatted(date: .abbreviated, time: .omitted)): \(point.balance) kr")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 Section("Veckovis") {
                     ForEach(vm.uiState.weeklySummaries, id: \.weekNumber) { w in
                         LabeledContent("Vecka \(w.weekNumber)", value: "\(w.balance) kr")
@@ -100,8 +252,60 @@ struct StatsView: View {
     }
 }
 
+struct InteractiveLineChart: View {
+    let points: [ChartPoint]
+    @Binding var selectedPoint: ChartPoint?
+
+    var body: some View {
+        GeometryReader { geo in
+            let width = geo.size.width
+            let height = geo.size.height
+            let minY = points.map(\.balance).min() ?? 0
+            let maxY = points.map(\.balance).max() ?? 1
+            let range = CGFloat(max(1, maxY - minY))
+
+            ZStack {
+                Path { path in
+                    for (index, p) in points.enumerated() {
+                        let x = width * CGFloat(index) / CGFloat(max(points.count - 1, 1))
+                        let y = height - (CGFloat(p.balance - minY) / range) * height
+                        if index == 0 { path.move(to: CGPoint(x: x, y: y)) }
+                        else { path.addLine(to: CGPoint(x: x, y: y)) }
+                    }
+                }
+                .stroke(.tint, lineWidth: 2)
+
+                if let selectedPoint,
+                   let idx = points.firstIndex(where: { $0.dayIndex == selectedPoint.dayIndex }) {
+                    let x = width * CGFloat(idx) / CGFloat(max(points.count - 1, 1))
+                    let y = height - (CGFloat(selectedPoint.balance - minY) / range) * height
+                    Path { p in
+                        p.move(to: CGPoint(x: x, y: 0))
+                        p.addLine(to: CGPoint(x: x, y: height))
+                    }
+                    .stroke(.secondary, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                    Circle().fill(.tint).frame(width: 10, height: 10).position(x: x, y: y)
+                }
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        guard !points.isEmpty else { return }
+                        let clampedX = min(max(0, value.location.x), width)
+                        let ratio = clampedX / max(1, width)
+                        let index = Int(round(ratio * CGFloat(points.count - 1)))
+                        selectedPoint = points[min(max(0, index), points.count - 1)]
+                    }
+                    .onEnded { _ in }
+            )
+        }
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject private var vm: MatkortViewModel
+    @Binding var showTutorial: Bool
     @State private var showHolidays = false
     @State private var showSetBalance = false
     @State private var setBalanceText = ""
@@ -140,6 +344,12 @@ struct SettingsView: View {
                 }
                 Section("Lov") {
                     Button("Hantera lov") { showHolidays = true }
+                }
+                Section("Tutorial") {
+                    Button("Visa tutorial igen") {
+                        vm.updateSession { $0.hasSeenTutorial = false }
+                        showTutorial = true
+                    }
                 }
             }
             .navigationTitle("Inställningar")

@@ -68,4 +68,29 @@ final class MatkortCoreTests: XCTestCase {
         XCTAssertTrue(loaded.holidays.contains(where: { $0.name == "Höstlov v.44" }))
         XCTAssertTrue(loaded.holidays.contains(where: { $0.name == "Jullov" }))
     }
+
+    func testWeeklySummariesNewestFirst() {
+        let engine = MatkortEngine(calendar: calendar)
+        let now = date(2026, 2, 18)
+        let state = engine.computeUIState(transactions: [], holidays: [], now: now)
+
+        XCTAssertGreaterThanOrEqual(state.weeklySummaries.count, 1)
+        if state.weeklySummaries.count > 1 {
+            XCTAssertGreaterThanOrEqual(state.weeklySummaries[0].weekNumber, state.weeklySummaries[1].weekNumber)
+        }
+    }
+
+    func testDailyAvailableAccountsForFutureIncomeParity() {
+        let period = SchoolPeriod(name: "Test", start: date(2026, 2, 16), end: date(2026, 2, 20))
+        // Monday with no holidays: remainingDays = 5, futureDays = 4.
+        let daily = SchoolPeriodUtils.getDailyAvailable(
+            currentBalance: 0,
+            period: period,
+            holidays: [],
+            currentDate: date(2026, 2, 16),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(daily, (4 * 70) / 5)
+    }
 }

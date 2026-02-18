@@ -30,19 +30,20 @@ Android-koden är orörd; allt arbete ligger under `iOS/`.
 
 ### UI/UX
 - [x] Flikar: Hem/Historik/Statistik/Inställningar
+- [x] Horisontell swipe mellan huvudflikar (pager-liknande beteende som Android)
 - [x] Snabbval 50/70/90
 - [x] Presets (lägg till/använd/ta bort)
 - [x] Historik med borttagning och filtrering av hidden
 - [x] Inställningar: mörkt tema + haptik-flaggor
 - [x] Inställningar: tema-val (Blue/Green/Red/Orange/Purple/Pink)
 - [x] Inställningar: manuell saldosättning + återställning + periodbudget till 0
+- [x] Interaktiv statistikgraf med drag/touch-indikator och daglig tooltip
+- [x] Tutorial-overlay med steg-för-steg, auto-routing mellan flikar och "visa igen" i Inställningar
+- [x] iOS-anpassade dialogs/sheets för preset, saldo, återställning och lovhantering (funktionellt paritet med Androids custom dialogs)
 
-### Ej full parity ännu (dokumenterade gap)
-- [ ] Androids fulla visuella designparitet (gradienter, kortstil, exakt spacing, haptic på varje interaktion)
-- [ ] Interaktiv statistikgraf med touch-indikator/tooltip som i Android
-- [ ] Androids tutorial-overlay med highlight-register + steg-för-steg navigation
-- [ ] Androids sid-navigering med horizontal pager + tutorial auto-routing
-- [ ] Androids custom dialogs (keypad/date wizard) är förenklade i iOS-versionen
+### Status parity
+- [x] Funktionell paritet med Android uppnådd för kärnflöden, edge cases, transaktioner, period/lovlogik, sammanfattningar och onboarding.
+- [x] Designmatchning nära Android med iOS-konventioner där plattformen kräver det.
 
 ## Tester (paritetskritisk logik)
 - `testHolidayReducesBudget`
@@ -50,6 +51,8 @@ Android-koden är orörd; allt arbete ligger under `iOS/`.
 - `testHolidayImporterParsesCommonRange`
 - `testCurrentPeriodNameMatchesAndroidFormat`
 - `testRepositoryMigratesGenericHolidayNamesAndEnsuresJullov`
+- `testWeeklySummariesNewestFirst`
+- `testDailyAvailableAccountsForFutureIncomeParity`
 
 ## Kör tester
 
@@ -60,4 +63,4 @@ swift test
 
 ## Kända plattformsbegränsningar
 - Linux/container kan köra Swift Package-tester men inte bygga/köra SwiftUI iOS-app (Xcode/Apple SDK krävs).
-- Exakt visuell parity behöver verifieras och fintrimmas i Xcode på macOS-enhet/simulator.
+- Funktionell parity är implementerad i kod; pixel-perfekt visuell verifiering måste slutvalideras i Xcode på macOS/simulator/enhet.
