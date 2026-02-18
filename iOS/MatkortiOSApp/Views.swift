@@ -9,14 +9,17 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    VStack(spacing: 8) {
-                        Text("Tillgängligt nu").font(.headline)
-                        Text("\(vm.uiState.currentBalance) kr").font(.system(size: 42, weight: .bold))
-                        Text("Per dag: \(vm.uiState.dailyAvailable) kr").foregroundStyle(.secondary)
+                    TabView {
+                        summaryCard("Tillgängligt nu", "\(vm.uiState.currentBalance) kr", "Nuvarande saldo")
+                        summaryCard("Daglig budget", "\(vm.uiState.dailyAvailable) kr", "\(vm.uiState.daysRemaining) skoldagar kvar")
+                        summaryCard("Denna vecka", "\(vm.uiState.currentWeekBalance) kr", "Ackumulerat: \(vm.uiState.currentWeekAccumulated) kr")
+                        summaryCard("Periodens budget", "\(vm.uiState.periodBudgetRemaining) kr", "Kvar till lovet")
                     }
-                    HStack(spacing: 12) {
-                        quick(50); quick(70); quick(90)
-                    }
+                    .frame(height: 170)
+                    .tabViewStyle(.page)
+
+                    HStack(spacing: 12) { quick(50); quick(70); quick(90) }
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Presets").font(.headline)
                         ScrollView(.horizontal) {
@@ -37,6 +40,14 @@ struct HomeView: View {
         }
     }
 
+    private func summaryCard(_ title: String, _ value: String, _ subtitle: String) -> some View {
+        VStack(spacing: 8) {
+            Text(title).font(.headline)
+            Text(value).font(.system(size: 36, weight: .bold))
+            Text(subtitle).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
     private func quick(_ amount: Int) -> some View {
         Button("\(amount)") { vm.addTransaction(amount) }
             .buttonStyle(.borderedProminent)
@@ -49,14 +60,17 @@ struct HistoryView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(vm.transactions.filter { !$0.isHidden && ($0.amount != 0 || $0.description != nil) }) { tx in
+                let visible = vm.transactions.filter { !$0.isHidden && ($0.amount != 0 || $0.description != nil) }
+                ForEach(visible) { tx in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(tx.timestamp.formatted(date: .abbreviated, time: .shortened))
                             if let d = tx.description { Text(d).font(.caption).foregroundStyle(.secondary) }
                         }
                         Spacer()
-                        Text(tx.description == nil ? "-\(tx.amount) kr" : "")
+                        if tx.description == nil {
+                            Text(tx.amount == 0 ? "0 kr" : "-\(tx.amount) kr")
+                        }
                     }
                     .swipeActions { Button("Ta bort", role: .destructive) { vm.deleteTransaction(tx) } }
                 }
@@ -89,11 +103,22 @@ struct StatsView: View {
 struct SettingsView: View {
     @EnvironmentObject private var vm: MatkortViewModel
     @State private var showHolidays = false
+    @State private var showSetBalance = false
+    @State private var setBalanceText = ""
+    @State private var showResetConfirm = false
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Tema") {
+                    Picker("Färgtema", selection: Binding(
+                        get: { vm.session.theme },
+                        set: { value in vm.updateSession { $0.theme = value } }
+                    )) {
+                        ForEach(AppTheme.allCases, id: \.self) { theme in
+                            Text(theme.rawValue).tag(theme)
+                        }
+                    }
                     Toggle("Mörkt tema", isOn: Binding(
                         get: { vm.session.isDarkTheme },
                         set: { value in vm.updateSession { $0.isDarkTheme = value } }
@@ -106,6 +131,11 @@ struct SettingsView: View {
                     ))
                 }
                 Section("Saldo") {
+                    Button("Ange nuvarande saldo") {
+                        setBalanceText = ""
+                        showSetBalance = true
+                    }
+                    Button("Återställ saldo till 0 kr", role: .destructive) { showResetConfirm = true }
                     Button("Sätt periodbudget till 0") { vm.setPeriodBudgetRemaining(0) }
                 }
                 Section("Lov") {
@@ -114,6 +144,24 @@ struct SettingsView: View {
             }
             .navigationTitle("Inställningar")
             .sheet(isPresented: $showHolidays) { HolidaysView() }
+            .alert("Ange nuvarande saldo", isPresented: $showSetBalance) {
+                TextField("Saldo", text: $setBalanceText)
+                    .keyboardType(.numberPad)
+                Button("Avbryt", role: .cancel) {}
+                Button("Spara") {
+                    if let amount = Int(setBalanceText.trimmingCharacters(in: .whitespaces)) {
+                        vm.setManualBalance(amount)
+                    }
+                }
+            } message: {
+                Text("Vill du ta reda på ditt saldo? Ring 08 681 81 37")
+            }
+            .alert("Återställ saldo", isPresented: $showResetConfirm) {
+                Button("Avbryt", role: .cancel) {}
+                Button("Återställ", role: .destructive) { vm.resetBalance() }
+            } message: {
+                Text("Detta lägger till en korrigeringstransaktion i historiken.")
+            }
         }
     }
 }
@@ -158,7 +206,7 @@ struct HolidaysView: View {
                         Task {
                             let res = await vm.importHolidays()
                             switch res {
-                            case .success(let count): message = "Importerade \(count) lov"
+                            case .success(let count): message = count > 0 ? "Importerade \(count) lov" : "Inga nya lov att importera"
                             case .failure(let error): message = error.localizedDescription
                             }
                         }

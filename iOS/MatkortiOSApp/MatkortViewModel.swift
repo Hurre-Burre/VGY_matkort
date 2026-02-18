@@ -44,6 +44,18 @@ final class MatkortViewModel: ObservableObject {
         persistAndRefresh()
     }
 
+    func resetBalance() {
+        transactions.insert(Transaction(amount: uiState.currentBalance, description: "Återställt saldo"), at: 0)
+        persistAndRefresh()
+    }
+
+    func setManualBalance(_ target: Int) {
+        let correction = uiState.currentBalance - target
+        guard correction != 0 else { return }
+        transactions.insert(Transaction(amount: correction, isHidden: true, description: "Manuell justering"), at: 0)
+        persistAndRefresh()
+    }
+
     func setPeriodBudgetRemaining(_ target: Int) {
         let correction = uiState.periodBudgetRemaining - target
         guard correction != 0 else { return }

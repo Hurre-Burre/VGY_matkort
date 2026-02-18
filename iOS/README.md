@@ -1,60 +1,63 @@
-# VGY Matkort iOS Port (separat från Android)
+# VGY Matkort iOS Port
 
-Detta är en separat iOS-port av Android-projektet `tmp/VGY_matkort`.
-Android-koden är **orörd**.
+Detta är iOS-porten av Android-projektet i samma repo (`tmp/VGY_matkort`).
+Android-koden är orörd; allt arbete ligger under `iOS/`.
 
-## Struktur
+## Paritetschecklista mot Android (feature-by-feature)
 
-- `MatkortCore/` – Swift Package med portad affärslogik:
-  - datamodeller (`Transaction`, `Preset`, `Holiday`)
-  - period-/budgetberäkning (motsvarar `MainViewModel` + `SchoolPeriodUtils`)
-  - semester/inställningslagring (`AppSessionStore`)
-  - lokal state persistence (`AppStateRepository`, JSON-fil)
-  - nätverksimport av lov från `https://vgy.se/lasarsdata/` (`HolidayImporter`)
-- `MatkortiOSApp/` – SwiftUI-appkod (TabView: Hem/Historik/Statistik/Inställningar + lovhantering)
+### Kärnlogik
+- [x] 70 kr/skoldag med holiday-aware periodberäkning
+- [x] Beräkning från dagen efter senaste avslutade lov (samma princip som Android)
+- [x] Nuvarande saldo, daglig tillgänglig budget, återstående skoldagar
+- [x] Veckosammanfattningar (nyast först)
+- [x] Chart-data dag-för-dag
+- [x] Hidden transaktioner påverkar saldo men filtreras i relevanta vyer
+- [x] Periodbudget-justering via dold korrigeringstransaktion
+- [x] Manuell saldosättning via dold korrigeringstransaktion
+- [x] Återställ saldo skapar synlig transaktion (`Återställt saldo`)
+- [x] Periodnamn-format uppdaterat till Android-format (`Until Holiday (Month Day)` / `Until Semester End`)
 
-## Funktionalitet som portats
+### Data/migrering
+- [x] Lokal state persistence (JSON)
+- [x] Default holidays seeded vid tom state
+- [x] Migrering: generiska `Holiday`-namn döps om när datum matchar default
+- [x] Skydd: säkerställer att `Jullov` finns om det saknas (som Android-init)
 
-- Snabbtransaktioner (50/70/90)
-- Presets (lägg till, använd, ta bort)
-- Historik med borttagning
-- Statistik med veckosammanfattning och nyckeltal
-- Inställningar: dark mode, haptik-flagga, periodbudget-justering
-- Lovhantering:
-  - manuellt tillägg/borttagning
-  - webbimport med samma regex-strategi som Android-koden
-- Session/state-hantering med UserDefaults + lokal JSON
+### Lovhantering
+- [x] Manuell tillägg/borttagning av lov
+- [x] Import från `https://vgy.se/lasarsdata/`
+- [x] Dublettskydd vid import (match på startdatum)
 
-## Körning och test i Linux/container
+### UI/UX
+- [x] Flikar: Hem/Historik/Statistik/Inställningar
+- [x] Snabbval 50/70/90
+- [x] Presets (lägg till/använd/ta bort)
+- [x] Historik med borttagning och filtrering av hidden
+- [x] Inställningar: mörkt tema + haptik-flaggor
+- [x] Inställningar: tema-val (Blue/Green/Red/Orange/Purple/Pink)
+- [x] Inställningar: manuell saldosättning + återställning + periodbudget till 0
 
-Kärnlogik kan testas här via Swift Package:
+### Ej full parity ännu (dokumenterade gap)
+- [ ] Androids fulla visuella designparitet (gradienter, kortstil, exakt spacing, haptic på varje interaktion)
+- [ ] Interaktiv statistikgraf med touch-indikator/tooltip som i Android
+- [ ] Androids tutorial-overlay med highlight-register + steg-för-steg navigation
+- [ ] Androids sid-navigering med horizontal pager + tutorial auto-routing
+- [ ] Androids custom dialogs (keypad/date wizard) är förenklade i iOS-versionen
+
+## Tester (paritetskritisk logik)
+- `testHolidayReducesBudget`
+- `testHiddenTransactionAffectsBalanceNotWeeklySpent`
+- `testHolidayImporterParsesCommonRange`
+- `testCurrentPeriodNameMatchesAndroidFormat`
+- `testRepositoryMigratesGenericHolidayNamesAndEnsuresJullov`
+
+## Kör tester
 
 ```bash
-cd /home/hugo/.openclaw/workspace/tmp/VGY_matkort_ios/MatkortCore
+cd /home/hugo/.openclaw/workspace/tmp/VGY_matkort/iOS/MatkortCore
 swift test
 ```
 
-## Körning i macOS/Xcode (exakta steg)
-
-1. Öppna Finder/Terminal till:
-   - `/home/hugo/.openclaw/workspace/tmp/VGY_matkort_ios/MatkortCore`
-2. Öppna paketet i Xcode:
-   - `open Package.swift`
-3. Lägg till iOS app-target i Xcode (File -> New -> Target -> iOS App), eller skapa nytt iOS App-projekt och dra in filerna i `MatkortiOSApp/`.
-4. Se till att app-target länkar paketprodukten `MatkortCore`.
-5. Sätt deployment target till iOS 17+.
-6. Välj simulator (t.ex. iPhone 16) och kör.
-
-## Kända begränsningar / blockerare
-
-- I Linux går det inte att bygga/köra SwiftUI iOS-app (saknar Apple SDK/Xcode), därför har bara kärnlogiken verifierats här.
-- Android-appen har ingen klassisk auth/login/session-token mot backend; därför finns ingen sådan API-auth att porta. "Session" i iOS-porten avser appinställningar/persistens.
-- VGY-sidan är svår att extrahera robust med readability-verktyg, så importern följer Android-strategin (regex på rå HTML).
-
-## Matchning mot Android
-
-Portningen följer Androids centrala beteenden:
-- budget 70 kr/skoldag
-- holiday-aware periodberäkning
-- "hidden" korrigeringstransaktioner påverkar saldo men filtreras i vissa vyer
-- periodbudgetjustering genom dold korrigeringstransaktion
+## Kända plattformsbegränsningar
+- Linux/container kan köra Swift Package-tester men inte bygga/köra SwiftUI iOS-app (Xcode/Apple SDK krävs).
+- Exakt visuell parity behöver verifieras och fintrimmas i Xcode på macOS-enhet/simulator.

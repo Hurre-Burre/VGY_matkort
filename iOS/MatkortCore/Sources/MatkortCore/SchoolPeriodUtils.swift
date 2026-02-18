@@ -28,8 +28,15 @@ public enum SchoolPeriodUtils {
             .min { $0.lowerBound < $1.lowerBound }
 
         let periodEnd = nextHoliday?.lowerBound.addingTimeInterval(-86_400) ?? semesterEnd
-        let title: String = nextHoliday == nil ? "Until Semester End" : "Until Holiday"
-        return SchoolPeriod(name: title, start: semesterStart, end: periodEnd)
+        let periodName: String
+        if nextHoliday != nil {
+            let month = englishMonthName(periodEnd, calendar: calendar)
+            let day = calendar.component(.day, from: periodEnd)
+            periodName = "Until Holiday (\(month) \(day))"
+        } else {
+            periodName = "Until Semester End"
+        }
+        return SchoolPeriod(name: periodName, start: semesterStart, end: periodEnd)
     }
 
     public static func isSchoolDay(_ date: Date, holidays: [ClosedRange<Date>], calendar: Calendar = .current) -> Bool {
@@ -68,6 +75,14 @@ public enum SchoolPeriodUtils {
         let y = calendar.component(.year, from: date)
         let m = calendar.component(.month, from: date)
         return calendar.date(from: DateComponents(year: y, month: m >= 7 ? 12 : 6, day: m >= 7 ? 22 : 12))!
+    }
+
+    private static func englishMonthName(_ date: Date, calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMMM"
+        return formatter.string(from: date)
     }
 
     static func startOfDay(_ date: Date, _ calendar: Calendar) -> Date {

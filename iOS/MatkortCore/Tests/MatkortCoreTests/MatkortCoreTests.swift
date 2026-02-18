@@ -45,4 +45,27 @@ final class MatkortCoreTests: XCTestCase {
         XCTAssertEqual(parsed.count, 2)
         XCTAssertEqual(parsed.first?.name, "Höstlov")
     }
+
+    func testCurrentPeriodNameMatchesAndroidFormat() {
+        let holidays: [ClosedRange<Date>] = [date(2026, 2, 23)...date(2026, 2, 27)]
+        let period = SchoolPeriodUtils.getCurrentPeriod(date: date(2026, 2, 18), holidays: holidays, calendar: calendar)
+        XCTAssertEqual(period?.name, "Until Holiday (February 22)")
+    }
+
+    func testRepositoryMigratesGenericHolidayNamesAndEnsuresJullov() throws {
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("matkort-test-\(UUID().uuidString).json")
+        let repo = AppStateRepository(fileURL: tempURL)
+
+        // Generic holiday that should be renamed + no Jullov in file.
+        let snapshot = AppStateSnapshot(
+            transactions: [],
+            presets: [],
+            holidays: [Holiday(startDate: date(2025, 10, 27), endDate: date(2025, 10, 31), name: "Holiday")]
+        )
+        try repo.save(snapshot)
+
+        let loaded = repo.load()
+        XCTAssertTrue(loaded.holidays.contains(where: { $0.name == "Höstlov v.44" }))
+        XCTAssertTrue(loaded.holidays.contains(where: { $0.name == "Jullov" }))
+    }
 }

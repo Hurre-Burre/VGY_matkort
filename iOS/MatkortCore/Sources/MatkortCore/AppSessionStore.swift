@@ -77,11 +77,9 @@ public final class AppStateRepository {
     public func load() -> AppStateSnapshot {
         guard let data = try? Data(contentsOf: fileURL),
               let decoded = try? decoder.decode(AppStateSnapshot.self, from: data) else {
-            return AppStateSnapshot(holidays: SchoolPeriodUtils.defaultHolidays.map {
-                Holiday(startDate: $0.0.lowerBound, endDate: $0.0.upperBound, name: $0.1)
-            })
+            return AppStateSnapshot(holidays: defaultHolidays())
         }
-        return decoded
+        return normalize(snapshot: decoded)
     }
 
     public func save(_ snapshot: AppStateSnapshot) throws {
@@ -89,5 +87,38 @@ public final class AppStateRepository {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let data = try encoder.encode(snapshot)
         try data.write(to: fileURL, options: .atomic)
+    }
+
+    private func defaultHolidays() -> [Holiday] {
+        SchoolPeriodUtils.defaultHolidays.map {
+            Holiday(startDate: $0.0.lowerBound, endDate: $0.0.upperBound, name: $0.1)
+        }
+    }
+
+    private func normalize(snapshot: AppStateSnapshot) -> AppStateSnapshot {
+        var holidays = snapshot.holidays
+
+        // Migration parity with Android: rename generic "Holiday" entries when dates match defaults.
+        let defaults = defaultHolidays()
+        for idx in holidays.indices {
+            if holidays[idx].name == "Holiday",
+               let match = defaults.first(where: {
+                   Calendar.current.isDate($0.startDate, inSameDayAs: holidays[idx].startDate) &&
+                   Calendar.current.isDate($0.endDate, inSameDayAs: holidays[idx].endDate)
+               }) {
+                holidays[idx].name = match.name
+            }
+        }
+
+        // Ensure at least one matching Jullov exists (Android safeguards this on startup).
+        if let jullov = defaults.first(where: { $0.name == "Jullov" }) {
+            let hasJullov = holidays.contains { Calendar.current.isDate($0.startDate, inSameDayAs: jullov.startDate) }
+            if !hasJullov {
+                holidays.append(jullov)
+                holidays.sort { $0.startDate < $1.startDate }
+            }
+        }
+
+        return AppStateSnapshot(transactions: snapshot.transactions, presets: snapshot.presets, holidays: holidays)
     }
 }
