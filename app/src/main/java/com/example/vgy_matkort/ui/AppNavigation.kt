@@ -67,7 +67,7 @@ fun AppNavigation(
     val isHapticEnabled = viewModel.isHapticEnabled.collectAsState().value
 
 
-    val items = listOf(
+    val items: List<Screen> = listOf(
         Screen.Home,
         Screen.History,
         Screen.Stats,
@@ -79,7 +79,7 @@ fun AppNavigation(
     val highlightRegistry = viewModel.highlightRegistry.collectAsState().value
     
     // Calculate current highlight specs based on step
-    val currentStepData = TutorialStepData.steps.getOrNull(tutorialStep)
+    val currentStepData: TutorialStepData? = TutorialStepData.steps.getOrNull(tutorialStep)
     val currentHighlightSpecs: List<HighlightSpec> = remember(tutorialStep, highlightRegistry) {
         val area = currentStepData?.highlightArea
         if (area != null) {
@@ -141,11 +141,11 @@ fun AppNavigation(
                 ) {
                     val navBackStackEntry = navController.currentBackStackEntryAsState().value
                     val currentDestination = navBackStackEntry?.destination
-                    items.forEachIndexed { index, screen ->
+                    items.forEachIndexed { index: Int, screen: Screen ->
                         NavigationBarItem(
                             icon = { Icon(screen.icon, contentDescription = screen.title) },
                             label = { Text(screen.title) },
-                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            selected = currentDestination?.hierarchy?.any { destination -> destination.route == screen.route } == true,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MaterialTheme.colorScheme.primary,
                                 unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -160,8 +160,8 @@ fun AppNavigation(
                                 }
                             },
                             modifier = if (screen == Screen.Settings) {
-                                Modifier.onGloballyPositioned { 
-                                    viewModel.registerHighlight("settings_nav_item", it.boundsInRoot())
+                                Modifier.onGloballyPositioned { coordinates ->
+                                    viewModel.registerHighlight("settings_nav_item", coordinates.boundsInRoot())
                                 }
                             } else {
                                 Modifier
@@ -175,7 +175,7 @@ fun AppNavigation(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.padding(innerPadding)
-            ) { page ->
+            ) { page: Int ->
                 when (page) {
                     0 -> HomeScreen(
                         uiState = uiState,
