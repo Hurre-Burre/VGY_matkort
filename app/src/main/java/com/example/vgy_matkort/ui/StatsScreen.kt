@@ -46,7 +46,7 @@ import com.example.vgy_matkort.ui.theme.*
 fun StatsScreen(
     uiState: UiState,
     transactions: List<Transaction>,
-    onRegisterHighlight: (String, Rect) -> Unit
+    onRegisterHighlight: (String, Rect) -> Unit = { _, _ -> }
 ) {
     Column(
         modifier = Modifier
