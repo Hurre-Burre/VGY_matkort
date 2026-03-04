@@ -20,7 +20,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -39,8 +38,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import com.example.vgy_matkort.ui.theme.BackgroundGradientEnd
-import com.example.vgy_matkort.ui.theme.BackgroundGradientStart
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import kotlinx.coroutines.launch
@@ -62,12 +59,12 @@ fun AppNavigation(
     onSetTheme: (com.example.vgy_matkort.ui.theme.AppTheme) -> Unit
 ) {
     val navController = rememberNavController()
-    val uiState by viewModel.uiState.collectAsState()
-    val transactions by viewModel.transactions.collectAsState()
-    val presets by viewModel.presets.collectAsState()
-    val holidays by viewModel.holidays.collectAsState()
-    val shouldShowTutorial by viewModel.shouldShowTutorial.collectAsState()
-    val isHapticEnabled by viewModel.isHapticEnabled.collectAsState()
+    val uiState = viewModel.uiState.collectAsState().value
+    val transactions = viewModel.transactions.collectAsState().value
+    val presets = viewModel.presets.collectAsState().value
+    val holidays = viewModel.holidays.collectAsState().value
+    val shouldShowTutorial = viewModel.shouldShowTutorial.collectAsState().value
+    val isHapticEnabled = viewModel.isHapticEnabled.collectAsState().value
 
 
     val items = listOf(
@@ -78,8 +75,8 @@ fun AppNavigation(
     )
 
     // Global Tutorial Overlay
-    val tutorialStep by viewModel.tutorialStep.collectAsState()
-    val highlightRegistry by viewModel.highlightRegistry.collectAsState()
+    val tutorialStep = viewModel.tutorialStep.collectAsState().value
+    val highlightRegistry = viewModel.highlightRegistry.collectAsState().value
     
     // Calculate current highlight specs based on step
     val currentStepData = TutorialStepData.steps.getOrNull(tutorialStep)
@@ -142,7 +139,7 @@ fun AppNavigation(
                     containerColor = Color.Transparent, // Or semi-transparent
                     contentColor = Color.White
                 ) {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val navBackStackEntry = navController.currentBackStackEntryAsState().value
                     val currentDestination = navBackStackEntry?.destination
                     items.forEachIndexed { index, screen ->
                         NavigationBarItem(
