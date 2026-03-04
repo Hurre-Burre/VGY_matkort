@@ -20,7 +20,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -39,8 +38,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import com.example.vgy_matkort.ui.theme.BackgroundGradientEnd
-import com.example.vgy_matkort.ui.theme.BackgroundGradientStart
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import kotlinx.coroutines.launch
@@ -62,15 +59,15 @@ fun AppNavigation(
     onSetTheme: (com.example.vgy_matkort.ui.theme.AppTheme) -> Unit
 ) {
     val navController = rememberNavController()
-    val uiState by viewModel.uiState.collectAsState()
-    val transactions by viewModel.transactions.collectAsState()
-    val presets by viewModel.presets.collectAsState()
-    val holidays by viewModel.holidays.collectAsState()
-    val shouldShowTutorial by viewModel.shouldShowTutorial.collectAsState()
-    val isHapticEnabled by viewModel.isHapticEnabled.collectAsState()
+    val uiState = viewModel.uiState.collectAsState().value
+    val transactions = viewModel.transactions.collectAsState().value
+    val presets = viewModel.presets.collectAsState().value
+    val holidays = viewModel.holidays.collectAsState().value
+    val shouldShowTutorial = viewModel.shouldShowTutorial.collectAsState().value
+    val isHapticEnabled = viewModel.isHapticEnabled.collectAsState().value
 
 
-    val items = listOf(
+    val items: List<Screen> = listOf(
         Screen.Home,
         Screen.History,
         Screen.Stats,
@@ -78,28 +75,22 @@ fun AppNavigation(
     )
 
     // Global Tutorial Overlay
-    val tutorialStep by viewModel.tutorialStep.collectAsState()
-    val highlightRegistry by viewModel.highlightRegistry.collectAsState()
+    val tutorialStep = viewModel.tutorialStep.collectAsState().value
+    val highlightRegistry = viewModel.highlightRegistry.collectAsState().value
     
     // Calculate current highlight specs based on step
-    val currentStepData = TutorialStepData.steps.getOrNull(tutorialStep)
-    val currentHighlightSpecs = remember(tutorialStep, highlightRegistry) {
+    val currentStepData: TutorialStepData? = TutorialStepData.steps.getOrNull(tutorialStep)
+    val currentHighlightSpecs: List<HighlightSpec> = remember(tutorialStep, highlightRegistry) {
         val area = currentStepData?.highlightArea
         if (area != null) {
             val rect = highlightRegistry[area.key]
             if (rect != null) {
-                // Inflate the rect by 8.dp for better visual breathing room
-                val inflation = 16f // approx 8.dp in pixels, but we need density. 
-                // Let's use a fixed inflation or get density. 
-                // Since we are in a Composable, we can use LocalDensity.
-                // But wait, we are inside remember block.
-                // I'll just inflate it by a safe amount or use LocalDensity outside.
                 listOf(HighlightSpec(rect.inflate(16f), 16.dp)) 
             } else {
-                emptyList()
+                emptyList<HighlightSpec>()
             }
         } else {
-            emptyList()
+            emptyList<HighlightSpec>()
         }
     }
 
@@ -148,13 +139,13 @@ fun AppNavigation(
                     containerColor = Color.Transparent, // Or semi-transparent
                     contentColor = Color.White
                 ) {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val navBackStackEntry = navController.currentBackStackEntryAsState().value
                     val currentDestination = navBackStackEntry?.destination
-                    items.forEachIndexed { index, screen ->
+                    items.forEachIndexed { index: Int, screen: Screen ->
                         NavigationBarItem(
                             icon = { Icon(screen.icon, contentDescription = screen.title) },
                             label = { Text(screen.title) },
-                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            selected = currentDestination?.hierarchy?.any { destination -> destination.route == screen.route } == true,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MaterialTheme.colorScheme.primary,
                                 unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -169,8 +160,8 @@ fun AppNavigation(
                                 }
                             },
                             modifier = if (screen == Screen.Settings) {
-                                Modifier.onGloballyPositioned { 
-                                    viewModel.registerHighlight("settings_nav_item", it.boundsInRoot())
+                                Modifier.onGloballyPositioned { coordinates ->
+                                    viewModel.registerHighlight("settings_nav_item", coordinates.boundsInRoot())
                                 }
                             } else {
                                 Modifier
@@ -184,7 +175,7 @@ fun AppNavigation(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.padding(innerPadding)
-            ) { page ->
+            ) { page: Int ->
                 when (page) {
                     0 -> HomeScreen(
                         uiState = uiState,
@@ -284,4 +275,13 @@ fun AppNavigation(
             )
         }
     }
+}
+
+private fun Rect.inflate(padding: Float): Rect {
+    return Rect(
+        left = left - padding,
+        top = top - padding,
+        right = right + padding,
+        bottom = bottom + padding
+    )
 }

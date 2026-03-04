@@ -38,8 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vgy_matkort.data.Preset
 import com.example.vgy_matkort.data.Transaction
-import com.example.vgy_matkort.ui.theme.BackgroundGradientEnd
-import com.example.vgy_matkort.ui.theme.BackgroundGradientStart
 import com.example.vgy_matkort.ui.theme.SurfaceDark
 import com.example.vgy_matkort.ui.theme.TextSecondary
 import com.example.vgy_matkort.ui.theme.TextWhite
@@ -84,7 +82,7 @@ fun HomeScreen(
     if (showAddPresetDialog) {
         com.example.vgy_matkort.ui.components.AddPresetDialog(
             onDismiss = { showAddPresetDialog = false },
-            onConfirm = { amount, label ->
+            onConfirm = { amount: Int, label: String ->
                 onAddPreset(amount, label)
                 showAddPresetDialog = false
             }
@@ -469,4 +467,3 @@ fun AddPresetChip(onClick: () -> Unit) {
         }
     }
 }
-
