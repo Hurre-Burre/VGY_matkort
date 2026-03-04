@@ -113,88 +113,88 @@ fun HomeScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Spacer removed to fix double padding (Scaffold innerPadding already handles this)
-                // Balance Section (Replaces TankView)
-                Box {
-                    BalanceSection(
-                        uiState = uiState,
-                        pagerState = tankViewPagerState
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(48.dp))
-                
-                // Quick Actions
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    QuickActionButton(
-                        value = 50,
-                        onClick = {
-                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onAddTransaction(50)
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    QuickActionButton(
-                        value = 70,
-                        onClick = {
-                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onAddTransaction(70)
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    QuickActionButton(
-                        value = 90,
-                        onClick = {
-                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onAddTransaction(90)
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(48.dp))
-                
-                // Presets Header
-                Text(
-                    text = "Presets",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextSecondary,
-                    modifier = Modifier.align(Alignment.Start).padding(bottom = 16.dp)
-                )
-
-                // Presets List
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(presets) { preset ->
-                        PresetChip(
-                            preset = preset,
-                            onClick = {
-                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onAddTransaction(preset.amount)
-                            },
-                            onLongClick = {
-                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                presetToDelete = preset
-                            }
+                    // Balance Section (Replaces TankView)
+                    Box {
+                        BalanceSection(
+                            uiState = uiState,
+                            pagerState = tankViewPagerState
                         )
                     }
-                    item {
-                        AddPresetChip(onClick = {
-                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            showAddPresetDialog = true
-                        })
+
+                    Spacer(modifier = Modifier.height(48.dp))
+
+                    // Quick Actions
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        QuickActionButton(
+                            value = 50,
+                            onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onAddTransaction(50)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        QuickActionButton(
+                            value = 70,
+                            onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onAddTransaction(70)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        QuickActionButton(
+                            value = 90,
+                            onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onAddTransaction(90)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
+
+                    Spacer(modifier = Modifier.height(48.dp))
+
+                    // Presets Header
+                    Text(
+                        text = "Presets",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = TextSecondary,
+                        modifier = Modifier.align(Alignment.Start).padding(bottom = 16.dp)
+                    )
+
+                    // Presets List
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(presets) { preset ->
+                            PresetChip(
+                                preset = preset,
+                                onClick = {
+                                    if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onAddTransaction(preset.amount)
+                                },
+                                onLongClick = {
+                                    if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    presetToDelete = preset
+                                }
+                            )
+                        }
+                        item {
+                            AddPresetChip(onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                showAddPresetDialog = true
+                            })
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(48.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(48.dp))
-            }
             
             // Settings/Help Button positioned manually
             Row(
