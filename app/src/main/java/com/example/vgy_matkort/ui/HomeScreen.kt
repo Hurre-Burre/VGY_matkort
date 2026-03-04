@@ -84,7 +84,7 @@ fun HomeScreen(
     if (showAddPresetDialog) {
         com.example.vgy_matkort.ui.components.AddPresetDialog(
             onDismiss = { showAddPresetDialog = false },
-            onConfirm = { amount, label ->
+            onConfirm = { amount: Int, label: String ->
                 onAddPreset(amount, label)
                 showAddPresetDialog = false
             }
@@ -469,4 +469,3 @@ fun AddPresetChip(onClick: () -> Unit) {
         }
     }
 }
-

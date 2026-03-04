@@ -83,23 +83,17 @@ fun AppNavigation(
     
     // Calculate current highlight specs based on step
     val currentStepData = TutorialStepData.steps.getOrNull(tutorialStep)
-    val currentHighlightSpecs = remember(tutorialStep, highlightRegistry) {
+    val currentHighlightSpecs: List<HighlightSpec> = remember(tutorialStep, highlightRegistry) {
         val area = currentStepData?.highlightArea
         if (area != null) {
             val rect = highlightRegistry[area.key]
             if (rect != null) {
-                // Inflate the rect by 8.dp for better visual breathing room
-                val inflation = 16f // approx 8.dp in pixels, but we need density. 
-                // Let's use a fixed inflation or get density. 
-                // Since we are in a Composable, we can use LocalDensity.
-                // But wait, we are inside remember block.
-                // I'll just inflate it by a safe amount or use LocalDensity outside.
                 listOf(HighlightSpec(rect.inflate(16f), 16.dp)) 
             } else {
-                emptyList()
+                emptyList<HighlightSpec>()
             }
         } else {
-            emptyList()
+            emptyList<HighlightSpec>()
         }
     }
 
@@ -284,4 +278,13 @@ fun AppNavigation(
             )
         }
     }
+}
+
+private fun Rect.inflate(padding: Float): Rect {
+    return Rect(
+        left = left - padding,
+        top = top - padding,
+        right = right + padding,
+        bottom = bottom + padding
+    )
 }
