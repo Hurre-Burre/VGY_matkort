@@ -84,7 +84,7 @@ fun SettingsScreen(
                         onResetBalance()
                         showResetDialog = false
                     },
-                    colors = ButtonDefaults.textButtonColors(contentColor = AccentRed)
+                    colors = ButtonDefaults.textButtonColors(contentColor = iOSRed)
                 ) {
                     Text("Återställ")
                 }
@@ -97,230 +97,237 @@ fun SettingsScreen(
         )
     }
 
-    Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            
-            // Header
-            Box(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(iOSBackground)
+    ) {
+        Scaffold(
+            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        ) { innerPadding ->
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.CenterStart
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Inställningar",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 32.sp,
-                    color = TextWhite
-                )
-            }
-
-            // Theme Selector Card
-            SettingCard {
-                Column {
+                
+                // Header
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
                     Text(
-                        "Tema",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        color = TextWhite
+                        text = "Inställningar",
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = iOSTextBlack
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                    ) {
-                        com.example.vgy_matkort.ui.theme.AppTheme.values().forEach { theme ->
-                            val color = when (theme) {
-                                com.example.vgy_matkort.ui.theme.AppTheme.Blue -> com.example.vgy_matkort.ui.theme.BluePrimary
-                                com.example.vgy_matkort.ui.theme.AppTheme.Green -> com.example.vgy_matkort.ui.theme.GreenPrimary
-                                com.example.vgy_matkort.ui.theme.AppTheme.Red -> com.example.vgy_matkort.ui.theme.RedPrimary
-                                com.example.vgy_matkort.ui.theme.AppTheme.Orange -> com.example.vgy_matkort.ui.theme.OrangePrimary
-                                com.example.vgy_matkort.ui.theme.AppTheme.Purple -> com.example.vgy_matkort.ui.theme.PurplePrimary
-                                com.example.vgy_matkort.ui.theme.AppTheme.Pink -> com.example.vgy_matkort.ui.theme.PinkPrimary
-                            }
-                            
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(androidx.compose.foundation.shape.CircleShape)
-                                        .background(color)
-                                        .clickable { 
-                                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            onSetTheme(theme) 
-                                        }
-                                        .then(
-                                            if (currentTheme == theme) {
-                                                Modifier.border(2.dp, TextWhite, androidx.compose.foundation.shape.CircleShape)
-                                            } else {
-                                                Modifier
+                }
+
+                // Theme Selector Card
+                SettingCard {
+                    Column {
+                        Text(
+                            "Tema",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp,
+                            color = iOSTextBlack
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                        ) {
+                            com.example.vgy_matkort.ui.theme.AppTheme.values().forEach { theme ->
+                                val color = when (theme) {
+                                    com.example.vgy_matkort.ui.theme.AppTheme.Blue -> com.example.vgy_matkort.ui.theme.BluePrimary
+                                    com.example.vgy_matkort.ui.theme.AppTheme.Green -> com.example.vgy_matkort.ui.theme.GreenPrimary
+                                    com.example.vgy_matkort.ui.theme.AppTheme.Red -> com.example.vgy_matkort.ui.theme.RedPrimary
+                                    com.example.vgy_matkort.ui.theme.AppTheme.Orange -> com.example.vgy_matkort.ui.theme.OrangePrimary
+                                    com.example.vgy_matkort.ui.theme.AppTheme.Purple -> com.example.vgy_matkort.ui.theme.PurplePrimary
+                                    com.example.vgy_matkort.ui.theme.AppTheme.Pink -> com.example.vgy_matkort.ui.theme.PinkPrimary
+                                }
+                                
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(androidx.compose.foundation.shape.CircleShape)
+                                            .background(color)
+                                            .clickable { 
+                                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                onSetTheme(theme) 
                                             }
-                                        )
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = theme.name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (currentTheme == theme) TextWhite else TextTertiary,
-                                    fontSize = 12.sp
-                                )
+                                            .then(
+                                                if (currentTheme == theme) {
+                                                    Modifier.border(2.dp, iOSBlue, androidx.compose.foundation.shape.CircleShape)
+                                                } else {
+                                                    Modifier
+                                                }
+                                            )
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = theme.name,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (currentTheme == theme) iOSTextBlack else iOSTextGray,
+                                        fontSize = 12.sp
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            SettingCard {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                SettingCard {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Haptisk feedback",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp,
+                                color = iOSTextBlack
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "Vibration vid knapptryck",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 13.sp,
+                                color = iOSTextGray
+                            )
+                        }
+                        Switch(
+                            checked = isHapticEnabled,
+                            onCheckedChange = {
+                                if (it) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onToggleHaptic(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = androidx.compose.ui.graphics.Color.White,
+                                checkedTrackColor = iOSBlue,
+                                uncheckedThumbColor = androidx.compose.ui.graphics.Color.White,
+                                uncheckedTrackColor = iOSTextLightGray
+                            )
+                        )
+                    }
+                }
+                
+                // Holidays Card
+                SettingCard {
+                    Column {
                         Text(
-                            "Haptisk feedback",
+                            "Lov",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp,
-                            color = TextWhite
+                            color = iOSTextBlack
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Vibration vid knapptryck",
+                            "Hantera skollov och lediga dagar",
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 13.sp,
-                            color = TextTertiary
+                            color = iOSTextGray
                         )
-                    }
-                    Switch(
-                        checked = isHapticEnabled,
-                        onCheckedChange = {
-                            if (it) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onToggleHaptic(it)
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.primary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                            uncheckedThumbColor = TextTertiary,
-                            uncheckedTrackColor = SurfaceDark.copy(alpha = 0.5f)
-                        )
-                    )
-                }
-            }
-            
-            // Holidays Card
-            SettingCard {
-                Column {
-                    Text(
-                        "Lov",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        color = TextWhite
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "Hantera skollov och lediga dagar",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 13.sp,
-                        color = TextTertiary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = {
-                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onNavigateToHolidays()
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text(
-                            "Hantera lov",
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onNavigateToHolidays()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = iOSBlue.copy(alpha = 0.1f),
+                                contentColor = iOSBlue
+                            )
+                        ) {
+                            Text(
+                                "Hantera lov",
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
                     }
                 }
-            }
-            
-            // Data Management Card
-            SettingCard {
-                Column {
-                    Text(
-                        "Saldo",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        color = TextWhite
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "Hantera ditt kortsaldo",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 13.sp,
-                        color = TextTertiary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    Button(
-                        onClick = {
-                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            showSetBalanceDialog = true
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = TextWhite
-                        )
-                    ) {
+                
+                // Data Management Card
+                SettingCard {
+                    Column {
                         Text(
-                            "Ange nuvarande saldo",
+                            "Saldo",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            fontSize = 16.sp,
+                            color = iOSTextBlack
                         )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    OutlinedButton(
-                        onClick = {
-                            if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            showResetDialog = true
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = AccentRed
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, AccentRed.copy(alpha = 0.5f))
-                    ) {
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "Återställ saldo till 0 kr",
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            "Hantera ditt kortsaldo",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 13.sp,
+                            color = iOSTextGray
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Button(
+                            onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                showSetBalanceDialog = true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = iOSBlue,
+                                contentColor = androidx.compose.ui.graphics.Color.White
+                            )
+                        ) {
+                            Text(
+                                "Ange nuvarande saldo",
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        OutlinedButton(
+                            onClick = {
+                                if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                showResetDialog = true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = iOSRed
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, iOSRed.copy(alpha = 0.5f))
+                        ) {
+                            Text(
+                                "Återställ saldo till 0 kr",
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }
@@ -331,7 +338,7 @@ fun SettingCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+        colors = CardDefaults.cardColors(containerColor = iOSCardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.padding(20.dp)) {
@@ -379,7 +386,7 @@ fun ManageHolidaysScreen(
                         holidayToDelete?.let { onDeleteHoliday(it) }
                         holidayToDelete = null
                     },
-                    colors = ButtonDefaults.textButtonColors(contentColor = AccentRed)
+                    colors = ButtonDefaults.textButtonColors(contentColor = iOSRed)
                 ) {
                     Text("Ta bort")
                 }
@@ -406,7 +413,7 @@ fun ManageHolidaysScreen(
     }
 
     Scaffold(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        containerColor = iOSBackground,
         topBar = {
             TopAppBar(
                 title = { 
@@ -414,7 +421,7 @@ fun ManageHolidaysScreen(
                         "Hantera lov",
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp,
-                        color = TextWhite
+                        color = iOSTextBlack
                     ) 
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
@@ -423,7 +430,7 @@ fun ManageHolidaysScreen(
                         if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onBack()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Tillbaka", tint = TextWhite)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Tillbaka", tint = iOSBlue)
                     }
                 },
                 actions = {
@@ -454,17 +461,17 @@ fun ManageHolidaysScreen(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
                                 strokeWidth = 2.dp,
-                                color = TextWhite
+                                color = iOSBlue
                             )
                         } else {
-                            Icon(Icons.Default.Refresh, contentDescription = "Importera lov från VGY", tint = TextWhite)
+                            Icon(Icons.Default.Refresh, contentDescription = "Importera lov från VGY", tint = iOSBlue)
                         }
                     }
                     IconButton(onClick = { 
                         if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         showAddDialog = true 
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Lägg till lov", tint = TextWhite)
+                        Icon(Icons.Default.Add, contentDescription = "Lägg till lov", tint = iOSBlue)
                     }
                 }
             )
@@ -474,7 +481,7 @@ fun ManageHolidaysScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(20.dp),
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
@@ -482,19 +489,19 @@ fun ManageHolidaysScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
-                color = TextWhite,
+                color = iOSTextBlack,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(
                 "Dagar inom dessa perioder räknas INTE som skoldagar.",
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 13.sp,
-                color = TextTertiary,
+                color = iOSTextGray,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 items(holidays) { holiday ->
@@ -527,7 +534,7 @@ fun HolidayItem(holiday: Holiday, onDelete: () -> Unit, isHapticEnabled: Boolean
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+        colors = CardDefaults.cardColors(containerColor = iOSCardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -543,14 +550,14 @@ fun HolidayItem(holiday: Holiday, onDelete: () -> Unit, isHapticEnabled: Boolean
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
-                    color = TextWhite
+                    color = iOSTextBlack
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = dateRange,
                     style = MaterialTheme.typography.bodySmall,
                     fontSize = 13.sp,
-                    color = TextTertiary
+                    color = iOSTextGray
                 )
             }
             IconButton(onClick = {
@@ -560,7 +567,7 @@ fun HolidayItem(holiday: Holiday, onDelete: () -> Unit, isHapticEnabled: Boolean
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = "Ta bort",
-                    tint = AccentRed.copy(alpha = 0.7f)
+                    tint = iOSRed.copy(alpha = 0.7f)
                 )
             }
         }

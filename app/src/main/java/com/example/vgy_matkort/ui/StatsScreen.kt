@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,141 +50,222 @@ fun StatsScreen(
     transactions: List<Transaction>,
     onRegisterHighlight: (String, Rect) -> Unit = { _, _ -> }
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 20.dp)
+            .background(iOSBackground)
     ) {
-        // Header
-        Text(
-            text = "Statistik",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            fontSize = 32.sp,
-            color = TextWhite
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Översikt av ditt saldo",
-            style = MaterialTheme.typography.bodyLarge,
-            fontSize = 16.sp,
-            color = TextTertiary
-        )
-        
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Stats Summary Cards
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            StatCard(
-                label = "Nuvarande",
-                value = "${uiState.currentBalance} kr",
-                color = if (uiState.currentBalance >= 0) AccentGreen else AccentRed,
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                label = "Per dag",
-                value = "${uiState.dailyAvailable} kr",
-                color = PrimaryBlue,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Chart Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.3f) // Responsive height
-                .onGloballyPositioned { coordinates ->
-                    onRegisterHighlight("stats_chart", coordinates.boundsInRoot())
-                },
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceCard),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "Saldoutveckling",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = TextWhite
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Faktiskt vs Ideal",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 14.sp,
-                    color = TextTertiary
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxSize()) {
-                    ModernBalanceChart(
-                        data = uiState.chartData,
-                        initialBalance = uiState.initialBalance,
-                        totalDays = 100
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        // Weekly Breakdown
         Column(
-            modifier = Modifier.onGloballyPositioned { coordinates ->
-                onRegisterHighlight("stats_weekly", coordinates.boundsInRoot())
-            }
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Header (Centered like iOS navigation bar title, or large left depending on exact want. Mockup 4 shows centered small title)
             Text(
-                text = "Veckovis uppdelning",
+                text = "Statistik",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-                color = TextWhite
+                color = iOSTextBlack,
+                modifier = Modifier.padding(bottom = 24.dp)
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            uiState.weeklySummaries.forEach { summary ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+
+            // Restaurant Pie Chart
+            if (uiState.restaurantExpenses.isNotEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
+                    Card(
+                        modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = iOSCardBackground),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp).fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            ModernPieChart(expenses = uiState.restaurantExpenses)
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                // Details underneath
+                Text(
+                    text = "Sparade restauranger",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = iOSTextGray,
+                    modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+                )
+                
+                uiState.restaurantExpenses.forEachIndexed { index, expense ->
+                    val pieColors = listOf(
+                        PrimaryBlue, AccentGreen, AccentRed, 
+                        Color(0xFFFFA726), Color(0xFFAB47BC), Color(0xFF26C6DA), Color(0xFFEC407A)
+                    )
+                    val color = pieColors[index % pieColors.size]
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = iOSCardBackground)
                     ) {
-                        Text(
-                            text = "Vecka ${summary.weekNumber}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 16.sp,
-                            color = TextWhite
-                        )
-                        Text(
-                            text = "${summary.balance} kr",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = if (summary.balance >= 0) AccentGreen else AccentRed
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(color)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = expense.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = iOSTextBlack,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            Text(
+                                text = "${expense.amount} kr",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = iOSTextGray
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+            
+            // Weekly Breakdown
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Veckototaler",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = iOSTextGray,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                uiState.weeklySummaries.forEach { summary ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = iOSCardBackground)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "År ${LocalDate.now().year}", // Simple approximation for UI
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = iOSTextGray
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Vecka ${summary.weekNumber}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = iOSTextBlack
+                                )
+                            }
+                            Text(
+                                text = "${summary.balance} kr",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = iOSTextGray
+                            )
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Keep the old charts below just in case, styled similarly
+            Text(
+                text = "Övrigt",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = iOSTextGray,
+                modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+            )
+
+            // Stats Summary Cards
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StatCard(
+                    label = "Nuvarande",
+                    value = "${uiState.currentBalance} kr",
+                    color = if (uiState.currentBalance >= 0) iOSGreen else iOSRed,
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    label = "Per dag",
+                    value = "${uiState.dailyAvailable} kr",
+                    color = iOSBlue,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Chart Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.3f), // Responsive height
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = iOSCardBackground),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Saldoutveckling",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = iOSTextBlack
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Faktiskt vs Ideal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 14.sp,
+                        color = iOSTextGray
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        ModernBalanceChart(
+                            data = uiState.chartData,
+                            initialBalance = uiState.initialBalance,
+                            totalDays = 100
                         )
                     }
                 }
             }
+            
+            Spacer(modifier = Modifier.height(80.dp))
         }
-        
-        Spacer(modifier = Modifier.height(80.dp))
     }
 }
 
@@ -444,6 +527,98 @@ fun ModernBalanceChart(data: List<ChartPoint>, initialBalance: Int, totalDays: I
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun ModernPieChart(expenses: List<RestaurantExpense>) {
+    val totalAmount = expenses.sumOf { it.amount }.coerceAtLeast(1)
+    
+    val pieColors = listOf(
+        PrimaryBlue, AccentGreen, AccentRed, 
+        Color(0xFFFFA726), Color(0xFFAB47BC), Color(0xFF26C6DA), Color(0xFFEC407A)
+    )
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Pie Chart
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .aspectRatio(1f)
+                .padding(8.dp)
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val strokeThickness = size.width * 0.15f
+                val chartSize = size.width - strokeThickness
+                
+                var startAngle = -90f
+                expenses.forEachIndexed { index, expense ->
+                    val sweepAngle = (expense.amount.toFloat() / totalAmount.toFloat()) * 360f
+                    val color = pieColors[index % pieColors.size]
+                    
+                    val gap = if (expenses.size > 1) 2f else 0f
+                    
+                    if (sweepAngle - gap > 0) {
+                        drawArc(
+                            color = color,
+                            startAngle = startAngle + gap/2,
+                            sweepAngle = sweepAngle - gap,
+                            useCenter = false,
+                            topLeft = Offset(strokeThickness/2, strokeThickness/2),
+                            size = androidx.compose.ui.geometry.Size(chartSize, chartSize),
+                            style = Stroke(width = strokeThickness)
+                        )
+                    }
+                    startAngle += sweepAngle
+                }
+            }
+        }
+        
+        // Legend
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            expenses.take(7).forEachIndexed { index, expense ->
+                val color = pieColors[index % pieColors.size]
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(color)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = expense.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextWhite,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "${expense.amount} kr",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextTertiary,
+                        )
+                    }
+                }
+            }
+            if (expenses.size > 7) {
+                Text(
+                    text = "+ ${expenses.size - 7} fler",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextTertiary,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
         }
     }
