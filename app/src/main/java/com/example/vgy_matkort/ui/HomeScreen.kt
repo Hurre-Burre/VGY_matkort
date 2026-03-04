@@ -24,12 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.font.FontWeight
@@ -56,11 +53,6 @@ fun HomeScreen(
     onNavigateToWeeklySummary: () -> Unit,
     onNavigateToSettings: () -> Unit,
 
-    shouldShowTutorial: Boolean,
-    currentTutorialStep: Int,
-    onTutorialComplete: () -> Unit,
-    onShowTutorial: () -> Unit,
-    onRegisterHighlight: (String, Rect) -> Unit,
     isHapticEnabled: Boolean
 ) {
     var presetToDelete by remember { mutableStateOf<Preset?>(null) }
@@ -68,16 +60,6 @@ fun HomeScreen(
     val haptic = LocalHapticFeedback.current
     
     val tankViewPagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 4 })
-
-    // Sync TankView pager with tutorial step
-    LaunchedEffect(currentTutorialStep) {
-        if (shouldShowTutorial) {
-            val stepData = TutorialStepData.steps.getOrNull(currentTutorialStep)
-            stepData?.tankViewPage?.let { page ->
-                tankViewPagerState.animateScrollToPage(page)
-            }
-        }
-    }
 
     if (showAddPresetDialog) {
         com.example.vgy_matkort.ui.components.AddPresetDialog(
@@ -132,9 +114,7 @@ fun HomeScreen(
                 ) {
                     // Spacer removed to fix double padding (Scaffold innerPadding already handles this)
                 // Balance Section (Replaces TankView)
-                Box(modifier = Modifier.onGloballyPositioned { 
-                    onRegisterHighlight("tank_view", it.boundsInRoot())
-                }) {
+                Box {
                     BalanceSection(
                         uiState = uiState,
                         pagerState = tankViewPagerState
@@ -147,10 +127,7 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .onGloballyPositioned {
-                            onRegisterHighlight("quick_add_buttons", it.boundsInRoot())
-                        },
+                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     QuickActionButton(
@@ -192,10 +169,7 @@ fun HomeScreen(
                 // Presets List
                 LazyRow(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .onGloballyPositioned {
-                            onRegisterHighlight("presets_list", it.boundsInRoot())
-                        },
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(presets) { preset ->
@@ -232,10 +206,7 @@ fun HomeScreen(
                 IconButton(
                     onClick = {
                         if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onShowTutorial()
-                    },
-                    modifier = Modifier.onGloballyPositioned { 
-                        onRegisterHighlight("settings_theme", it.boundsInRoot())
+                        onNavigateToSettings()
                     }
                 ) {
                     Icon(
@@ -244,7 +215,6 @@ fun HomeScreen(
                         tint = TextWhite
                     )
                 }
-            }
         }
     }
 }

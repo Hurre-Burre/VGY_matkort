@@ -47,7 +47,8 @@ import com.example.vgy_matkort.ui.theme.*
 @Composable
 fun StatsScreen(
     uiState: UiState,
-    transactions: List<Transaction>
+    transactions: List<Transaction>,
+    onRegisterHighlight: (String, Rect) -> Unit = { _, _ -> }
 ) {
     Box(
         modifier = Modifier

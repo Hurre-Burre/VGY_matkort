@@ -48,6 +48,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     periodBudgetRemaining: Int = 0,
     onSetPeriodBudget: (Int) -> Unit,
+    onRegisterHighlight: (String, Rect) -> Unit = { _, _ -> },
     onNavigateToHolidays: () -> Unit = {},
     isHapticEnabled: Boolean,
     onToggleHaptic: (Boolean) -> Unit,

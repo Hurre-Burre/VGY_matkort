@@ -453,6 +453,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun addTransaction(amount: Int, restaurantName: String) {
+        viewModelScope.launch {
+            transactionDao.insert(
+                Transaction(
+                    amount = amount,
+                    timestamp = System.currentTimeMillis(),
+                    description = restaurantName.ifBlank { null }
+                )
+            )
+        }
+    }
+
     fun deleteTransaction(transaction: Transaction) {
         viewModelScope.launch {
             transactionDao.delete(transaction)

@@ -35,6 +35,7 @@ import com.example.vgy_matkort.ui.theme.*
 fun HistoryScreen(
     transactions: List<Transaction>,
     onDeleteTransaction: (Transaction) -> Unit,
+    onRegisterHighlight: (String, Rect) -> Unit = { _, _ -> },
     isHapticEnabled: Boolean
 ) {
     Box(
