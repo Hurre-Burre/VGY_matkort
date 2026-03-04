@@ -215,7 +215,6 @@ fun HomeScreen(
                         tint = TextWhite
                     )
                 }
-            }
         }
     }
 }

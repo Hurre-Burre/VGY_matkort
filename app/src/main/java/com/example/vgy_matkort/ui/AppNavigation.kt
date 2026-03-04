@@ -98,7 +98,7 @@ fun AppNavigation(
                         NavigationBarItem(
                             icon = { Icon(screen.icon, contentDescription = screen.title) },
                             label = { Text(screen.title) },
-                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            selected = currentDestination?.hierarchy?.any { destination -> destination.route == screen.route } == true,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MaterialTheme.colorScheme.primary,
                                 unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -175,4 +175,13 @@ fun AppNavigation(
             }
         }
     }
+}
+
+private fun Rect.inflate(padding: Float): Rect {
+    return Rect(
+        left = left - padding,
+        top = top - padding,
+        right = right + padding,
+        bottom = bottom + padding
+    )
 }
