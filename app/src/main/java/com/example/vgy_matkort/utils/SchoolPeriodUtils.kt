@@ -113,8 +113,8 @@ object SchoolPeriodUtils {
         return days
     }
 
-    fun getAccumulatedBudget(period: SchoolPeriod, holidays: List<ClosedRange<LocalDate>>, currentDate: LocalDate = LocalDate.now()): Int {
-        return getDaysPassedInPeriod(period, holidays, currentDate) * 70
+    fun getAccumulatedBudget(period: SchoolPeriod, holidays: List<ClosedRange<LocalDate>>, currentDate: LocalDate = LocalDate.now(), dailyIncome: Int = 70): Int {
+        return getDaysPassedInPeriod(period, holidays, currentDate) * dailyIncome
     }
 
     fun getRemainingSchoolDays(period: SchoolPeriod, holidays: List<ClosedRange<LocalDate>>, currentDate: LocalDate = LocalDate.now()): Int {
@@ -133,13 +133,13 @@ object SchoolPeriodUtils {
         return days
     }
 
-    fun getDailyAvailable(currentBalance: Int, period: SchoolPeriod, holidays: List<ClosedRange<LocalDate>>, currentDate: LocalDate = LocalDate.now()): Int {
+    fun getDailyAvailable(currentBalance: Int, period: SchoolPeriod, holidays: List<ClosedRange<LocalDate>>, currentDate: LocalDate = LocalDate.now(), dailyIncome: Int = 70): Int {
         val remainingDays = getRemainingSchoolDays(period, holidays, currentDate)
         if (remainingDays == 0) return 0
         
-        // Future income is days *after* today * 70
+        // Future income is days *after* today * dailyIncome
         val futureDays = getRemainingSchoolDays(period, holidays, currentDate.plusDays(1))
-        val futureIncome = futureDays * 70
+        val futureIncome = futureDays * dailyIncome
         
         val totalAvailable = currentBalance + futureIncome
         return totalAvailable / remainingDays
