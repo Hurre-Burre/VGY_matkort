@@ -52,11 +52,24 @@ interface HolidayDao {
     suspend fun deleteAll()
 }
 
-@Database(entities = [Transaction::class, Preset::class, Holiday::class], version = 4, exportSchema = false)
+@Dao
+interface RestaurantDao {
+    @Query("SELECT * FROM Restaurant ORDER BY name ASC")
+    fun getAll(): Flow<List<Restaurant>>
+
+    @Insert
+    suspend fun insert(restaurant: Restaurant)
+
+    @Delete
+    suspend fun delete(restaurant: Restaurant)
+}
+
+@Database(entities = [Transaction::class, Preset::class, Holiday::class, Restaurant::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun presetDao(): PresetDao
     abstract fun holidayDao(): HolidayDao
+    abstract fun restaurantDao(): RestaurantDao
 
     companion object {
         @Volatile

@@ -27,48 +27,48 @@ data class GradientColors(
 )
 
 val LocalGradientColors = androidx.compose.runtime.staticCompositionLocalOf {
-    GradientColors(BlueGradientStart, BlueGradientMid, BackgroundGradientEnd)
+    GradientColors(BlueGradientStart, BlueGradientMid, BlueGradientMid)
 }
 
 @Composable
 fun VGY_MatkortTheme(
     appTheme: AppTheme = AppTheme.Blue,
-    darkTheme: Boolean = isSystemInDarkTheme(), // Kept for compatibility, but we enforce dark style mostly
+    darkTheme: Boolean = isSystemInDarkTheme(), // Ignored, always forcing light for iOS look
     content: @Composable () -> Unit
 ) {
     val (colorScheme, gradientColors) = when (appTheme) {
         AppTheme.Blue -> Pair(
-            darkColorScheme(primary = BluePrimary, surface = SurfaceDark, background = BlueGradientStart),
-            GradientColors(BlueGradientStart, BlueGradientMid, BackgroundGradientEnd)
+            lightColorScheme(primary = BluePrimary, surface = iOSCardBackground, background = iOSBackground),
+            GradientColors(BlueGradientStart, BlueGradientMid, BlueGradientMid)
         )
         AppTheme.Green -> Pair(
-            darkColorScheme(primary = GreenPrimary, surface = SurfaceDark, background = GreenGradientStart),
-            GradientColors(GreenGradientStart, GreenGradientMid, BackgroundGradientEnd)
+            lightColorScheme(primary = GreenPrimary, surface = iOSCardBackground, background = iOSBackground),
+            GradientColors(GreenGradientStart, GreenGradientMid, GreenGradientMid)
         )
         AppTheme.Red -> Pair(
-            darkColorScheme(primary = RedPrimary, surface = SurfaceDark, background = RedGradientStart),
-            GradientColors(RedGradientStart, RedGradientMid, BackgroundGradientEnd)
+            lightColorScheme(primary = RedPrimary, surface = iOSCardBackground, background = iOSBackground),
+            GradientColors(RedGradientStart, RedGradientMid, RedGradientMid)
         )
         AppTheme.Orange -> Pair(
-            darkColorScheme(primary = OrangePrimary, surface = SurfaceDark, background = OrangeGradientStart),
-            GradientColors(OrangeGradientStart, OrangeGradientMid, BackgroundGradientEnd)
+            lightColorScheme(primary = OrangePrimary, surface = iOSCardBackground, background = iOSBackground),
+            GradientColors(OrangeGradientStart, OrangeGradientMid, OrangeGradientMid)
         )
         AppTheme.Purple -> Pair(
-            darkColorScheme(primary = PurplePrimary, surface = SurfaceDark, background = PurpleGradientStart),
-            GradientColors(PurpleGradientStart, PurpleGradientMid, BackgroundGradientEnd)
+            lightColorScheme(primary = PurplePrimary, surface = iOSCardBackground, background = iOSBackground),
+            GradientColors(PurpleGradientStart, PurpleGradientMid, PurpleGradientMid)
         )
         AppTheme.Pink -> Pair(
-            darkColorScheme(primary = PinkPrimary, surface = SurfaceDark, background = PinkGradientStart),
-            GradientColors(PinkGradientStart, PinkGradientMid, BackgroundGradientEnd)
+            lightColorScheme(primary = PinkPrimary, surface = iOSCardBackground, background = iOSBackground),
+            GradientColors(PinkGradientStart, PinkGradientMid, PinkGradientMid)
         )
     }
 
     // Merge with common colors
     val finalColorScheme = colorScheme.copy(
         onPrimary = Color.White,
-        onBackground = TextWhite,
-        onSurface = TextWhite,
-        surface = SurfaceDark // Ensure we use our transparent surface
+        onBackground = iOSTextBlack,
+        onSurface = iOSTextBlack,
+        surface = iOSCardBackground 
     )
 
     CompositionLocalProvider(LocalGradientColors provides gradientColors) {

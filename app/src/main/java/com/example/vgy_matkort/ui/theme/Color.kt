@@ -10,52 +10,56 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// Modern Design System Colors - Blue Gradient with Teal Accents
-val PrimaryBlue = Color(0xFF4A90E2) // Vibrant Blue (restored)
-val PrimaryTeal = Color(0xFF00BCD4) // Vibrant Teal
-val PrimaryCyan = Color(0xFF26C6DA) // Bright Cyan
-val BackgroundGradientStart = Color(0xFF1A237E) // Deep Blue (restored)
-val BackgroundGradientMid = Color(0xFF0D3A5F) // Mid Blue
-val BackgroundGradientEnd = Color(0xFF000000) // Black (restored)
-val SurfaceDark = Color(0x591E2A2F) // Less transparent (approx 35%)
-val SurfaceCard = Color(0x73253842) // Less transparent (approx 45%)
-val SurfaceGlass = Color(0x40FFFFFF) // Less transparent (approx 25%) for buttons
+// iOS Design System Colors
+val iOSBackground = Color(0xFFF2F2F7) // Standard light gray background
+val iOSCardBackground = Color(0xFFFFFFFF) // Pure white card
+val iOSBlue = Color(0xFF007AFF)
+val iOSTextBlack = Color(0xFF000000)
+val iOSTextGray = Color(0xFF8E8E93)
+val iOSTextLightGray = Color(0xFFC7C7CC)
+val iOSRed = Color(0xFFFF3B30)
+val iOSGreen = Color(0xFF34C759)
+
+// Home Screen Custom Colors
+val HomeGradientStart = Color(0xFF96350B) // Darker orange/brown
+val HomeGradientEnd = Color(0xFFC24D11) // Lighter orange
+val HomeButtonBackground = Color(0xFFF48536) // The lighter orange for buttons like "50 kr"
+val HomeCardBackground = Color(0x33000000) // Semi-transparent black for the input card
+val HomeTextWhite = Color(0xFFFFFFFF)
+val HomeTextSecondary = Color(0xB3FFFFFF) // 70% white
+val HomeNavBar = Color(0xFF6E2805) // Brownish bottom nav bar color
+
+// Legacy colors (kept for compatibility during refactoring if needed)
+val SurfaceDark = Color(0x591E2A2F)
+val SurfaceCard = Color(0x73253842)
 val TextWhite = Color(0xFFFFFFFF)
-val TextSecondary = Color(0xB3FFFFFF) // 70% White
-val TextTertiary = Color(0x80FFFFFF) // 50% White
-val AccentGreen = Color(0xFF4ECDC4) // Teal-ish green
-val AccentRed = Color(0xFFFF6B6B) // Softer red
-val AccentYellow = Color(0xFFFFE66D) // Warm yellow
-val AccentPurple = Color(0xFF9B59B6) // Purple accent
-val ChartLineColor = Color(0xFF00E5FF) // Bright cyan for charts
+val TextSecondary = Color(0xB3FFFFFF)
+val TextTertiary = Color(0x80FFFFFF)
+val AccentGreen = Color(0xFF4ECDC4)
+val AccentRed = Color(0xFFFF6B6B)
+val PrimaryBlue = Color(0xFF4A90E2)
 
-// Theme Palettes
-// Blue (Default)
-val BluePrimary = Color(0xFF4A90E2)
-val BlueGradientStart = Color(0xFF1A237E)
-val BlueGradientMid = Color(0xFF0D3A5F)
+// Theme Palettes (re-adjusted for general accents if still used in settings)
+val BluePrimary = iOSBlue
+val BlueGradientStart = iOSBackground
+val BlueGradientMid = iOSBackground
 
-// Green
-val GreenPrimary = Color(0xFF66BB6A)
-val GreenGradientStart = Color(0xFF0D3A10)
-val GreenGradientMid = Color(0xFF1B5E20)
+val GreenPrimary = iOSGreen
+val GreenGradientStart = iOSBackground
+val GreenGradientMid = iOSBackground
 
-// Red
-val RedPrimary = Color(0xFFEF5350)
-val RedGradientStart = Color(0xFF7F0000)
-val RedGradientMid = Color(0xFFB71C1C)
+val RedPrimary = iOSRed
+val RedGradientStart = iOSBackground
+val RedGradientMid = iOSBackground
 
-// Orange
-val OrangePrimary = Color(0xFFFFA726)
-val OrangeGradientStart = Color(0xFFBF360C)
-val OrangeGradientMid = Color(0xFFE65100)
+val OrangePrimary = Color(0xFFFF9500)
+val OrangeGradientStart = iOSBackground
+val OrangeGradientMid = iOSBackground
 
-// Purple
-val PurplePrimary = Color(0xFFAB47BC)
-val PurpleGradientStart = Color(0xFF2A0845)
-val PurpleGradientMid = Color(0xFF4A148C)
+val PurplePrimary = Color(0xFFAF52DE)
+val PurpleGradientStart = iOSBackground
+val PurpleGradientMid = iOSBackground
 
-// Pink
-val PinkPrimary = Color(0xFFEC407A)
-val PinkGradientStart = Color(0xFF560027)
-val PinkGradientMid = Color(0xFF880E4F)
+val PinkPrimary = Color(0xFFFF2D55)
+val PinkGradientStart = iOSBackground
+val PinkGradientMid = iOSBackground
