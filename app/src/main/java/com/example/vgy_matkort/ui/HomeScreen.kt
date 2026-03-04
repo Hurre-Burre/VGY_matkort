@@ -210,14 +210,13 @@ fun HomeScreen(
                     }
                 ) {
                     Icon(
-                        Icons.Default.Info, 
+                        Icons.Default.Info,
                         contentDescription = "Hjälp / Tutorial",
                         tint = TextWhite
                     )
                 }
         }
     }
-}
 }
 
 @OptIn(ExperimentalFoundationApi::class)
