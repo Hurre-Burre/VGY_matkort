@@ -219,6 +219,8 @@ fun HomeScreen(
     }
 }
 
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BalanceSection(
