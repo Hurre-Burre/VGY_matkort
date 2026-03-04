@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class Transaction(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val amount: Int,
+    val restaurantName: String,
     val timestamp: Long,
     val isHidden: Boolean = false,
     val description: String? = null
@@ -17,4 +18,10 @@ data class Preset(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val amount: Int,
     val label: String
+)
+
+@Entity
+data class Restaurant(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String
 )

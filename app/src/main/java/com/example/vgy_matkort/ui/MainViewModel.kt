@@ -23,6 +23,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val transactionDao = database.transactionDao()
     private val presetDao = database.presetDao()
     private val holidayDao = database.holidayDao()
+    private val restaurantDao = database.restaurantDao()
 
     val transactions: StateFlow<List<Transaction>> = transactionDao.getAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -33,20 +34,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val holidays: StateFlow<List<com.example.vgy_matkort.data.Holiday>> = holidayDao.getAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val restaurants: StateFlow<List<com.example.vgy_matkort.data.Restaurant>> = restaurantDao.getAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private val _currentDate = MutableStateFlow(LocalDate.now())
     
     private val sharedPreferences = application.getSharedPreferences("vgy_matkort_prefs", android.content.Context.MODE_PRIVATE)
     private val _isDarkTheme = MutableStateFlow(sharedPreferences.getBoolean("is_dark_theme", false))
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
     
-    private val _shouldShowTutorial = MutableStateFlow(!sharedPreferences.getBoolean("has_seen_tutorial", false))
-    val shouldShowTutorial: StateFlow<Boolean> = _shouldShowTutorial.asStateFlow()
-
-    private val _tutorialStep = MutableStateFlow(0)
-    val tutorialStep: StateFlow<Int> = _tutorialStep.asStateFlow()
-
-    private val _highlightRegistry = MutableStateFlow<Map<String, androidx.compose.ui.geometry.Rect>>(emptyMap())
-    val highlightRegistry: StateFlow<Map<String, androidx.compose.ui.geometry.Rect>> = _highlightRegistry.asStateFlow()
+    private val _setupPreferences = MutableStateFlow(
+        SetupPreferences(
+            isCompleted = sharedPreferences.getBoolean("setup_completed", false),
+            dailyIncome = sharedPreferences.getInt("daily_income", 70),
+            periodStart = sharedPreferences.getLong("period_start", 0L),
+            periodEnd = sharedPreferences.getLong("period_end", 0L)
+        )
+    )
+    val setupPreferences: StateFlow<SetupPreferences> = _setupPreferences.asStateFlow()
 
     private val _isHapticEnabled = MutableStateFlow(sharedPreferences.getBoolean("is_haptic_enabled", true))
     val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
@@ -124,38 +129,78 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sharedPreferences.edit().putBoolean("is_haptic_enabled", isEnabled).apply()
     }
     
-    fun markTutorialAsSeen() {
-        _shouldShowTutorial.value = false
-        sharedPreferences.edit().putBoolean("has_seen_tutorial", true).apply()
-    }
-    
-    fun showTutorial() {
-        _tutorialStep.value = 0
-        _shouldShowTutorial.value = true
-    }
+    fun completeSetup(
+        currentBalance: Int,
+        dailyIncome: Int,
+        startDate: java.time.LocalDate,
+        endDate: java.time.LocalDate,
+        theme: com.example.vgy_matkort.ui.theme.AppTheme
+    ) {
+        val startMillis = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val endMillis = endDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-    fun nextTutorialStep() {
-        _tutorialStep.value++
-    }
+        sharedPreferences.edit()
+            .putBoolean("setup_completed", true)
+            .putInt("daily_income", dailyIncome)
+            .putLong("period_start", startMillis)
+            .putLong("period_end", endMillis)
+            .apply()
 
-    fun prevTutorialStep() {
-        if (_tutorialStep.value > 0) {
-            _tutorialStep.value--
+        _setupPreferences.value = SetupPreferences(
+            isCompleted = true,
+            dailyIncome = dailyIncome,
+            periodStart = startMillis,
+            periodEnd = endMillis
+        )
+        
+        setTheme(theme)
+
+        // Reset and set the exact balance requested
+        viewModelScope.launch {
+            // First clear all existing transactions so we start fresh, just in case
+            transactionDao.getAll().first().forEach { 
+                transactionDao.delete(it) 
+            }
+            
+            // Calculate accumulation from start date to today
+            val today = java.time.LocalDate.now()
+            val holidayRanges = holidays.value.map { h -> 
+                val s = java.time.Instant.ofEpochMilli(h.startDate).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                val e = java.time.Instant.ofEpochMilli(h.endDate).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                s..e
+            }
+            val period = com.example.vgy_matkort.utils.SchoolPeriod("Vald Period", startDate, endDate)
+            
+            // The accumulated budget from startDate to today
+            var accBudget = 0
+            var d = startDate
+            val calcEnd = if (today.isBefore(endDate)) today else endDate
+            while (!d.isAfter(calcEnd)) {
+                if (SchoolPeriodUtils.isSchoolDay(d, holidayRanges)) {
+                    accBudget += dailyIncome
+                }
+                d = d.plusDays(1)
+            }
+            
+            // We want currentBalance = accBudget - spent -> spent = accBudget - currentBalance
+            // So we add a system transaction of amount (accBudget - currentBalance)
+            val initialSpentAmount = accBudget - currentBalance
+            
+            if (initialSpentAmount != 0 || currentBalance == 0) {
+                transactionDao.insert(
+                    Transaction(
+                        amount = initialSpentAmount,
+                        restaurantName = "System",
+                        timestamp = System.currentTimeMillis(),
+                        isHidden = true,
+                        description = "Startsaldo inställt"
+                    )
+                )
+            }
         }
     }
     
-    fun setTutorialStep(step: Int) {
-        _tutorialStep.value = step
-    }
-
-    fun registerHighlight(key: String, rect: androidx.compose.ui.geometry.Rect) {
-        val current = _highlightRegistry.value.toMutableMap()
-        current[key] = rect
-        _highlightRegistry.value = current
-    }
-
-    
-    val uiState = combine(transactions, _currentDate, holidays) { transactions, date, dbHolidays ->
+    val uiState = combine(transactions, _currentDate, holidays, _setupPreferences) { transactions, date, dbHolidays, setupPrefs ->
         // Convert DB holidays to ranges first
         val holidayRanges = dbHolidays.map { 
             val start = java.time.Instant.ofEpochMilli(it.startDate).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
@@ -163,8 +208,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             start..end
         }
 
-        // Get dynamic period based on date and holidays
-        val period = SchoolPeriodUtils.getCurrentPeriod(date, holidayRanges)
+        // Get dynamic period based on setup or defaults if not setup
+        val period = if (setupPrefs.isCompleted) {
+            val start = java.time.Instant.ofEpochMilli(setupPrefs.periodStart).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+            val end = java.time.Instant.ofEpochMilli(setupPrefs.periodEnd).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+            com.example.vgy_matkort.utils.SchoolPeriod("Inställd Period", start, end)
+        } else {
+            SchoolPeriodUtils.getCurrentPeriod(date, holidayRanges)
+        }
+        
+        val dailyIncome = if (setupPrefs.isCompleted) setupPrefs.dailyIncome else 70
         
         // Find the last holiday that has ended before today
         val lastHolidayEnd = holidayRanges
@@ -180,7 +233,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var d = calculationStartDate!!
             while (!d.isAfter(date) && !d.isAfter(period.end)) {
                 if (SchoolPeriodUtils.isSchoolDay(d, holidayRanges)) {
-                    budget += 70
+                    budget += dailyIncome
                 }
                 d = d.plusDays(1)
             }
@@ -230,7 +283,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 var d = startDate
                 while (!d.isAfter(weekDate)) {
                     if (SchoolPeriodUtils.isSchoolDay(d, holidayRanges)) {
-                        accBudgetSinceStart += 70
+                        accBudgetSinceStart += dailyIncome
                     }
                     d = d.plusDays(1)
                 }
@@ -282,7 +335,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 d = d.plusDays(1)
             }
-            currentWeekAccumulated = daysInWeek * 70
+            currentWeekAccumulated = daysInWeek * dailyIncome
             
             // Calculate spent just for this week
             currentWeekSpent = visiblePeriodTransactions.filter { 
@@ -313,7 +366,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 var d = calculationStartDate!!
                 while (!d.isAfter(chartDate)) {
                     if (SchoolPeriodUtils.isSchoolDay(d, holidayRanges)) {
-                        accBudget += 70
+                        accBudget += dailyIncome
                     }
                     d = d.plusDays(1)
                 }
@@ -343,7 +396,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var d = calculationStartDate!!
             while (!d.isAfter(period.end)) {
                 if (SchoolPeriodUtils.isSchoolDay(d, holidayRanges)) {
-                    budget += 70
+                    budget += dailyIncome
                 }
                 d = d.plusDays(1)
             }
@@ -354,6 +407,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         
         val periodBudgetRemaining = totalPeriodBudget - spent
         
+        val restaurantExpenses = if (period != null && calculationStartDate != null) {
+            val expensesMap = mutableMapOf<String, Int>()
+            visiblePeriodTransactions.filter { it.amount > 0 && it.restaurantName != "System" }.forEach { tx ->
+                val currentAmount = expensesMap[tx.restaurantName] ?: 0
+                expensesMap[tx.restaurantName] = currentAmount + tx.amount
+            }
+            expensesMap.map { RestaurantExpense(it.key, it.value) }.sortedByDescending { it.amount }
+        } else {
+            emptyList()
+        }
+        
         UiState(
             currentBalance = currentBalance,
             initialBalance = accumulatedBudget,
@@ -363,17 +427,53 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             totalPeriodBudget = totalPeriodBudget,
             periodBudgetRemaining = periodBudgetRemaining,
             daysRemaining = period?.let { SchoolPeriodUtils.getRemainingSchoolDays(it, holidayRanges, date) } ?: 0,
-            dailyAvailable = period?.let { SchoolPeriodUtils.getDailyAvailable(currentBalance, it, holidayRanges, date) } ?: 0,
+            dailyAvailable = period?.let { SchoolPeriodUtils.getDailyAvailable(currentBalance, it, holidayRanges, date, dailyIncome) } ?: 0,
             chartData = chartData,
             currentWeekBalance = currentWeekBalance,
             currentWeekSpent = currentWeekSpent,
-            currentWeekAccumulated = currentWeekAccumulated
+            currentWeekAccumulated = currentWeekAccumulated,
+            restaurantExpenses = restaurantExpenses
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
-    fun addTransaction(amount: Int) {
+    fun addTransaction(amount: Int, restaurantName: String) {
         viewModelScope.launch {
-            transactionDao.insert(Transaction(amount = amount, timestamp = System.currentTimeMillis()))
+            transactionDao.insert(Transaction(amount = amount, restaurantName = restaurantName, timestamp = System.currentTimeMillis()))
+            
+            val exists = restaurants.value.any { it.name.equals(restaurantName, ignoreCase = true) }
+            if (!exists && restaurantName.isNotBlank() && restaurantName != "System" && restaurantName != "Okänd") {
+                restaurantDao.insert(com.example.vgy_matkort.data.Restaurant(name = restaurantName.trim()))
+            }
+        }
+    }
+    
+    fun deleteRestaurant(restaurant: com.example.vgy_matkort.data.Restaurant) {
+        viewModelScope.launch {
+            restaurantDao.delete(restaurant)
+        }
+    }
+
+    fun addTransaction(amount: Int, restaurantName: String) {
+        viewModelScope.launch {
+            transactionDao.insert(
+                Transaction(
+                    amount = amount,
+                    timestamp = System.currentTimeMillis(),
+                    description = restaurantName.ifBlank { null }
+                )
+            )
+        }
+    }
+
+    fun addTransaction(amount: Int, restaurantName: String) {
+        viewModelScope.launch {
+            transactionDao.insert(
+                Transaction(
+                    amount = amount,
+                    timestamp = System.currentTimeMillis(),
+                    description = restaurantName.ifBlank { null }
+                )
+            )
         }
     }
 
@@ -426,7 +526,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // If balance is 100, we add transaction of 100 (spent).
             // If balance is -50, we add transaction of -50 (refund/correction).
             // Even if balance is 0, we log it so user sees "Återställt saldo" in history.
-            transactionDao.insert(Transaction(amount = currentBalance, timestamp = System.currentTimeMillis(), description = "Återställt saldo"))
+            transactionDao.insert(Transaction(amount = currentBalance, restaurantName = "System", timestamp = System.currentTimeMillis(), description = "Återställt saldo"))
         }
     }
     
@@ -437,7 +537,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // If current is 100 and target is 150, correction = -50 (add money)
             // If current is 100 and target is 50, correction = 50 (subtract money)
             if (correction != 0) {
-                transactionDao.insert(Transaction(amount = correction, timestamp = System.currentTimeMillis(), isHidden = true, description = "Manuell justering"))
+                transactionDao.insert(Transaction(amount = correction, restaurantName = "System", timestamp = System.currentTimeMillis(), isHidden = true, description = "Manuell justering"))
             }
         }
     }
@@ -449,7 +549,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // If remaining is 1000 and target is 800, correction = 200 (we spent 200 more)
             // If remaining is 1000 and target is 1200, correction = -200 (we spent 200 less)
             if (correction != 0) {
-                transactionDao.insert(Transaction(amount = correction, timestamp = System.currentTimeMillis(), isHidden = true, description = "Periodbudget justering"))
+                transactionDao.insert(Transaction(amount = correction, restaurantName = "System", timestamp = System.currentTimeMillis(), isHidden = true, description = "Periodbudget justering"))
             }
         }
     }
@@ -504,7 +604,13 @@ data class UiState(
     val chartData: List<ChartPoint> = emptyList(),
     val currentWeekBalance: Int = 0,
     val currentWeekSpent: Int = 0,
-    val currentWeekAccumulated: Int = 0
+    val currentWeekAccumulated: Int = 0,
+    val restaurantExpenses: List<RestaurantExpense> = emptyList()
+)
+
+data class RestaurantExpense(
+    val name: String,
+    val amount: Int
 )
 
 data class WeekSummary(
@@ -517,3 +623,11 @@ data class ChartPoint(
     val balance: Int,
     val date: LocalDate
 )
+
+data class SetupPreferences(
+    val isCompleted: Boolean,
+    val dailyIncome: Int,
+    val periodStart: Long,
+    val periodEnd: Long
+)
+
