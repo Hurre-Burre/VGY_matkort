@@ -12,11 +12,11 @@ val Pink40 = Color(0xFF7D5260)
 
 // iOS Design System Colors
 val iOSBackground = Color(0xFFF2F2F7) // Standard light gray background
-val iOSCardBackground = Color(0xFFFFFFFF) // Pure white card
+val iOSCardBackground = Color(0x26FFFFFF) // Translucent card on gradient backgrounds
 val iOSBlue = Color(0xFF007AFF)
-val iOSTextBlack = Color(0xFF000000)
+val iOSTextBlack = Color(0xFF111111)
 val iOSTextGray = Color(0xFF8E8E93)
-val iOSTextLightGray = Color(0xFFC7C7CC)
+val iOSTextLightGray = Color(0xFFB3B3B8)
 val iOSRed = Color(0xFFFF3B30)
 val iOSGreen = Color(0xFF34C759)
 

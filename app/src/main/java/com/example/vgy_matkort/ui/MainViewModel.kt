@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.vgy_matkort.data.AppDatabase
 import com.example.vgy_matkort.data.Preset
 import com.example.vgy_matkort.data.Transaction
+import com.example.vgy_matkort.notifications.NotificationScheduler
 import com.example.vgy_matkort.utils.SchoolPeriodUtils
 import com.example.vgy_matkort.utils.HolidayImporter
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,12 +56,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isHapticEnabled = MutableStateFlow(sharedPreferences.getBoolean("is_haptic_enabled", true))
     val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
+    
+    private val _language = MutableStateFlow(sharedPreferences.getString("language", "sv") ?: "sv")
+    val language: StateFlow<String> = _language.asStateFlow()
+    
+    private val _reminderMinutes = MutableStateFlow(sharedPreferences.getInt("reminder_minutes", 12 * 60))
+    val reminderMinutes: StateFlow<Int> = _reminderMinutes.asStateFlow()
+
+    private val _notificationsEnabled = MutableStateFlow(sharedPreferences.getBoolean("notifications_enabled", true))
+    val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
+    
+    private val _autoHolidaysEnabled = MutableStateFlow(sharedPreferences.getBoolean("auto_holidays_enabled", true))
+    val autoHolidaysEnabled: StateFlow<Boolean> = _autoHolidaysEnabled.asStateFlow()
 
     private val _currentTheme = MutableStateFlow(
         try {
-            com.example.vgy_matkort.ui.theme.AppTheme.valueOf(sharedPreferences.getString("app_theme", "Blue") ?: "Blue")
+            com.example.vgy_matkort.ui.theme.AppTheme.valueOf(sharedPreferences.getString("app_theme", "Signature") ?: "Signature")
         } catch (e: Exception) {
-            com.example.vgy_matkort.ui.theme.AppTheme.Blue
+            com.example.vgy_matkort.ui.theme.AppTheme.Signature
         }
     )
     val currentTheme: StateFlow<com.example.vgy_matkort.ui.theme.AppTheme> = _currentTheme.asStateFlow()
@@ -72,6 +85,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     
     init {
+        if (_setupPreferences.value.isCompleted && _notificationsEnabled.value) {
+            NotificationScheduler.scheduleDailyReminder(getApplication(), _reminderMinutes.value)
+        }
         viewModelScope.launch {
             val existingHolidays = holidayDao.getAll().first()
             
@@ -128,13 +144,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isHapticEnabled.value = isEnabled
         sharedPreferences.edit().putBoolean("is_haptic_enabled", isEnabled).apply()
     }
+
+    fun setLanguage(value: String) {
+        _language.value = value
+        sharedPreferences.edit().putString("language", value).apply()
+    }
+
+    fun setReminderMinutes(value: Int) {
+        _reminderMinutes.value = value
+        sharedPreferences.edit().putInt("reminder_minutes", value).apply()
+        if (_notificationsEnabled.value) {
+            NotificationScheduler.scheduleDailyReminder(getApplication(), value)
+        }
+    }
+
+    fun setNotificationsEnabled(value: Boolean) {
+        _notificationsEnabled.value = value
+        sharedPreferences.edit().putBoolean("notifications_enabled", value).apply()
+        if (value) {
+            NotificationScheduler.scheduleDailyReminder(getApplication(), _reminderMinutes.value)
+        } else {
+            NotificationScheduler.cancelDailyReminder(getApplication())
+        }
+    }
+
+    fun setAutoHolidaysEnabled(value: Boolean) {
+        _autoHolidaysEnabled.value = value
+        sharedPreferences.edit().putBoolean("auto_holidays_enabled", value).apply()
+        if (value) {
+            ensureDefaultHolidays()
+        }
+    }
     
     fun completeSetup(
         currentBalance: Int,
         dailyIncome: Int,
         startDate: java.time.LocalDate,
         endDate: java.time.LocalDate,
-        theme: com.example.vgy_matkort.ui.theme.AppTheme
+        theme: com.example.vgy_matkort.ui.theme.AppTheme,
+        reminderMinutes: Int,
+        notificationsEnabled: Boolean
     ) {
         val startMillis = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         val endMillis = endDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -144,6 +193,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             .putInt("daily_income", dailyIncome)
             .putLong("period_start", startMillis)
             .putLong("period_end", endMillis)
+            .putInt("reminder_minutes", reminderMinutes)
+            .putBoolean("notifications_enabled", notificationsEnabled)
             .apply()
 
         _setupPreferences.value = SetupPreferences(
@@ -152,8 +203,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             periodStart = startMillis,
             periodEnd = endMillis
         )
+        _reminderMinutes.value = reminderMinutes
+        _notificationsEnabled.value = notificationsEnabled
         
         setTheme(theme)
+        if (notificationsEnabled) {
+            NotificationScheduler.scheduleDailyReminder(getApplication(), reminderMinutes)
+        } else {
+            NotificationScheduler.cancelDailyReminder(getApplication())
+        }
 
         // Reset and set the exact balance requested
         viewModelScope.launch {
@@ -436,13 +494,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
+    fun addTransaction(amount: Int) {
+        addTransaction(amount, "Okänd")
+    }
+
+    fun setPeriodDates(startDate: java.time.LocalDate, endDate: java.time.LocalDate) {
+        val startMillis = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val endMillis = endDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        sharedPreferences.edit()
+            .putLong("period_start", startMillis)
+            .putLong("period_end", endMillis)
+            .apply()
+        _setupPreferences.value = _setupPreferences.value.copy(periodStart = startMillis, periodEnd = endMillis)
+    }
+
+    fun setDailyIncome(value: Int) {
+        sharedPreferences.edit().putInt("daily_income", value).apply()
+        _setupPreferences.value = _setupPreferences.value.copy(dailyIncome = value)
+    }
+
     fun addTransaction(amount: Int, restaurantName: String) {
         viewModelScope.launch {
-            transactionDao.insert(Transaction(amount = amount, restaurantName = restaurantName, timestamp = System.currentTimeMillis()))
-            
-            val exists = restaurants.value.any { it.name.equals(restaurantName, ignoreCase = true) }
-            if (!exists && restaurantName.isNotBlank() && restaurantName != "System" && restaurantName != "Okänd") {
-                restaurantDao.insert(com.example.vgy_matkort.data.Restaurant(name = restaurantName.trim()))
+            transactionDao.insert(
+                Transaction(
+                    amount = amount,
+                    restaurantName = restaurantName.ifBlank { "Okänd" },
+                    timestamp = System.currentTimeMillis(),
+                    description = restaurantName.ifBlank { null }
+                )
+            )
+
+            val cleanedName = restaurantName.trim()
+            val exists = restaurants.value.any { it.name.equals(cleanedName, ignoreCase = true) }
+            if (!exists && cleanedName.isNotBlank() && cleanedName != "System" && cleanedName != "Okänd") {
+                restaurantDao.insert(com.example.vgy_matkort.data.Restaurant(name = cleanedName))
+            }
+        }
+    }
+
+    fun addRestaurant(name: String) {
+        val cleanedName = name.trim()
+        if (cleanedName.isBlank()) return
+        viewModelScope.launch {
+            val exists = restaurants.value.any { it.name.equals(cleanedName, ignoreCase = true) }
+            if (!exists && cleanedName != "System" && cleanedName != "Okänd") {
+                restaurantDao.insert(com.example.vgy_matkort.data.Restaurant(name = cleanedName))
             }
         }
     }
@@ -453,21 +549,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addTransaction(amount: Int, restaurantName: String) {
-        viewModelScope.launch {
-            transactionDao.insert(
-                Transaction(
-                    amount = amount,
-                    timestamp = System.currentTimeMillis(),
-                    description = restaurantName.ifBlank { null }
-                )
-            )
-        }
-    }
-
     fun deleteTransaction(transaction: Transaction) {
         viewModelScope.launch {
             transactionDao.delete(transaction)
+        }
+    }
+
+    fun clearAllTransactions() {
+        viewModelScope.launch {
+            transactionDao.deleteAll()
         }
     }
 
@@ -563,6 +653,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private fun ensureDefaultHolidays() {
+        viewModelScope.launch {
+            val existingHolidays = holidayDao.getAll().first()
+            SchoolPeriodUtils.defaultHolidays.forEach { (range, name) ->
+                val exists = existingHolidays.any {
+                    val dbStart = java.time.Instant.ofEpochMilli(it.startDate).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                    dbStart == range.start
+                }
+                if (!exists) {
+                    val start = range.start.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val end = range.endInclusive.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    holidayDao.insert(com.example.vgy_matkort.data.Holiday(startDate = start, endDate = end, name = name))
+                }
+            }
         }
     }
 }

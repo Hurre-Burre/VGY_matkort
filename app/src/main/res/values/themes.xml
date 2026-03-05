@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.VGY_Matkort" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.VGY_Matkort" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/matkort_window_light</item>
+        <item name="android:colorBackground">@color/matkort_window_light</item>
+        <item name="android:colorPrimary">@color/matkort_primary_light</item>
+        <item name="android:colorAccent">@color/matkort_primary_light</item>
+        <item name="android:statusBarColor">@color/matkort_system_bar_light</item>
+        <item name="android:navigationBarColor">@color/matkort_system_bar_light</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
 </resources>

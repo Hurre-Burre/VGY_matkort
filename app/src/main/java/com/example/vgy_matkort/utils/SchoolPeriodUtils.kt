@@ -3,6 +3,8 @@ package com.example.vgy_matkort.utils
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import java.time.temporal.IsoFields
+import java.time.temporal.TemporalAdjusters
 
 data class SchoolPeriod(
     val name: String,
@@ -11,22 +13,61 @@ data class SchoolPeriod(
 )
 
 object SchoolPeriodUtils {
-    // Default holidays for initial migration (keep these as they are useful defaults)
-    val defaultHolidays = listOf(
-        LocalDate.of(2024, 10, 28)..LocalDate.of(2024, 11, 1) to "Höstlov v.44",
-        LocalDate.of(2024, 12, 23)..LocalDate.of(2025, 1, 7) to "Jullov", // Added explicitly as a holiday
-        LocalDate.of(2025, 2, 17)..LocalDate.of(2025, 2, 21) to "Sportlov v.8",
-        LocalDate.of(2025, 4, 14)..LocalDate.of(2025, 4, 17) to "Påsklov",
-        
-        // Autumn 2025
-        LocalDate.of(2025, 10, 27)..LocalDate.of(2025, 10, 31) to "Höstlov v.44",
-        LocalDate.of(2025, 12, 23)..LocalDate.of(2026, 1, 7) to "Jullov",
-        
-        // Spring 2026
-        LocalDate.of(2026, 2, 23)..LocalDate.of(2026, 2, 27) to "Sportlov v.9",
-        LocalDate.of(2026, 4, 3)..LocalDate.of(2026, 4, 10) to "Påsklov",
-        LocalDate.of(2026, 5, 14)..LocalDate.of(2026, 5, 15) to "Lov (Kristi Himmelsfärd)"
-    )
+    // Auto-holidays for Stockholm pattern: höstlov v44, sportlov v9, påsklov veckan efter påskdagen,
+    // jullov, sommarlov. Generated per year window.
+    val defaultHolidays: List<Pair<ClosedRange<LocalDate>, String>>
+        get() {
+            val currentYear = LocalDate.now().year
+            return (currentYear - 1..currentYear + 2)
+                .flatMap { generateStockholmSchoolHolidays(it) }
+                .distinctBy { Triple(it.first.start, it.first.endInclusive, it.second) }
+        }
+
+    private fun generateStockholmSchoolHolidays(year: Int): List<Pair<ClosedRange<LocalDate>, String>> {
+        val sportlovStart = mondayOfIsoWeek(year, 9)
+        val hostlovStart = mondayOfIsoWeek(year, 44)
+        val easterSunday = easterSunday(year)
+        val pasklovStart = easterSunday.plusDays(1)
+
+        val jullovStart = LocalDate.of(year, 12, 23)
+        val jullovEnd = LocalDate.of(year + 1, 1, 7)
+
+        val sommarlovStart = LocalDate.of(year, 6, 12)
+        val sommarlovEnd = LocalDate.of(year, 8, 18)
+
+        return listOf(
+            (sportlovStart..sportlovStart.plusDays(4)) to "Sportlov",
+            (pasklovStart..pasklovStart.plusDays(4)) to "Påsklov",
+            (sommarlovStart..sommarlovEnd) to "Sommarlov",
+            (hostlovStart..hostlovStart.plusDays(4)) to "Höstlov",
+            (jullovStart..jullovEnd) to "Jullov"
+        )
+    }
+
+    private fun mondayOfIsoWeek(year: Int, week: Int): LocalDate {
+        return LocalDate.of(year, 1, 4)
+            .with(IsoFields.WEEK_OF_WEEK_BASED_YEAR, week.toLong())
+            .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    }
+
+    // Gregorian algorithm (Meeus/Jones/Butcher).
+    private fun easterSunday(year: Int): LocalDate {
+        val a = year % 19
+        val b = year / 100
+        val c = year % 100
+        val d = b / 4
+        val e = b % 4
+        val f = (b + 8) / 25
+        val g = (b - f + 1) / 3
+        val h = (19 * a + b - d - g + 15) % 30
+        val i = c / 4
+        val k = c % 4
+        val l = (32 + 2 * e + 2 * i - h - k) % 7
+        val m = (a + 11 * h + 22 * l) / 451
+        val month = (h + l - 7 * m + 114) / 31
+        val day = ((h + l - 7 * m + 114) % 31) + 1
+        return LocalDate.of(year, month, day)
+    }
 
     fun getCurrentPeriod(date: LocalDate = LocalDate.now(), holidays: List<ClosedRange<LocalDate>> = emptyList()): SchoolPeriod? {
         val semesterStart = getSemesterStart(date)

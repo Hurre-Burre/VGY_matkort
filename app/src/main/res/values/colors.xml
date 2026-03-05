@@ -7,4 +7,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- App window/system bar fallback colors (used before Compose draws) -->
+    <color name="matkort_primary_light">#FF2EA84A</color>
+    <color name="matkort_window_light">#FFF2EFE7</color>
+    <color name="matkort_surface_light">#FFF7F5EF</color>
+    <color name="matkort_system_bar_light">#FFF5F1E7</color>
 </resources>
